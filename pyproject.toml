@@ -5,7 +5,7 @@ description = "Default template for PDM package"
 authors = [
     {name = "Pierre", email = "pierre.brosemer@gmail.com"},
 ]
-dependencies = ["SQLAlchemy>=2.0.36", "fastapi>=0.115.5"]
+dependencies = ["SQLAlchemy>=2.0.36", "fastapi>=0.115.5", "python-jose[pycryptodome]>=3.3.0"]
 requires-python = "==3.12.*"
 readme = "README.md"
 license = {text = "MIT"}
