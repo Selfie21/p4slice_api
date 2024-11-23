@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 class CreateUser(BaseModel):
     username: str = Field(max_length=50)
@@ -6,7 +6,7 @@ class CreateUser(BaseModel):
 
 class User(BaseModel):
     username: str = Field(max_length=50)
-    hashed_password: str # TODO: input validate hex
+    hashed_password: SecretStr
     admin: bool
 
 class Token(BaseModel):
