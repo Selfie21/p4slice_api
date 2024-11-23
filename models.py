@@ -8,7 +8,6 @@ class User(BaseModel):
     username: str = Field(max_length=50)
     hashed_password: str # TODO: input validate hex
     admin: bool
-    disabled: bool = True
 
 class Token(BaseModel):
     access_token: str
