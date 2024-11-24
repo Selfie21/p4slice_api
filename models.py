@@ -5,7 +5,13 @@ from pydantic import BaseModel, Field, SecretStr, UUID4
 
 DEFAULT_LENGTH = 50
 
-
+class Configuration(BaseModel):
+    rate_limit_per_minute: int
+    jwt_secret_key: SecretStr
+    server_url: str
+    server_port: int
+    redis_url: str
+    redis_password: SecretStr
 
 # Slice Management
 class FlowIdentification(BaseModel):

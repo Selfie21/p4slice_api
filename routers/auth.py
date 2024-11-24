@@ -8,7 +8,7 @@ from dependencies import get_data_base, get_config
 from models import User, CreateUser, Token
 
 config = get_config()
-auth = APIRouter(dependencies=[Depends(RateLimiter(times=config['RATE_LIMIT_PER_MINUTE'], minutes=1))])
+auth = APIRouter(dependencies=[Depends(RateLimiter(times=config.rate_limit_per_minute, minutes=1))])
 
 
 # TODO: remove in prod

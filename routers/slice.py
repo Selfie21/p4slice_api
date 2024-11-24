@@ -6,7 +6,7 @@ from models import BaseSlice
 from dependencies import get_config
 
 config = get_config()
-slice = APIRouter(prefix="/slice", dependencies=[Depends(RateLimiter(times=config['RATE_LIMIT_PER_MINUTE'], minutes=1))])
+slice = APIRouter(prefix="/slice", dependencies=[Depends(RateLimiter(times=config.rate_limit_per_minute, minutes=1))])
 
 @slice.post("/add")
 def add_slice(slice: BaseSlice):

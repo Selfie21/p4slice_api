@@ -9,7 +9,7 @@ from dependencies import get_config, get_data_base
 from models import User, TokenData
 
 config = get_config()
-SECRET_KEY = config["JWT_SECRET_KEY"]
+SECRET_KEY = config.jwt_secret_key.get_secret_value()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 45
 
@@ -25,7 +25,7 @@ def authenticate_user(database: dict, username: str, password: str) -> User:
     user = _get_user(database, username)
     if not user:
         return False
-    if not _verify_password(password, user.hashed_password):
+    if not _verify_password(password, user.hashed_password.get_secret_value()):
         return False
     return user
 

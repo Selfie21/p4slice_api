@@ -9,7 +9,7 @@ from routers.slice import slice
 from dependencies import get_config
 
 async def lifespan(_: FastAPI):
-    redis_connection = redis.Redis(host=config['REDIS_URL'], port=6379, password=config['REDIS_PASSWORD'], encoding="utf8")
+    redis_connection = redis.Redis(host=config.redis_url, port=6379, password=config.redis_password.get_secret_value(), encoding="utf8")
     await FastAPILimiter.init(redis=redis_connection)
     yield
     await FastAPILimiter.close()
@@ -27,4 +27,4 @@ def read_root():
 
 if __name__ == "__main__":
     # TODO: for production set reload to false
-    uvicorn.run('main:app', host=config['SERVER_URL'], port=int(config['SERVER_PORT']), log_level='info', workers=4, reload=True)
+    uvicorn.run('main:app', host=config.server_url, port=config.server_port, log_level='info', workers=4, reload=True)
