@@ -1,11 +1,11 @@
 [project]
-name = "nicerslicer_api"
+name = "p4slice_api"
 version = "0.1.0"
-description = "Default template for PDM package"
+description = "An API acting as the application plane for a network slicing solution!"
 authors = [
     {name = "Pierre", email = "pierre.brosemer@gmail.com"},
 ]
-dependencies = ["fastapi>=0.115.5", "pyjwt[crypto]>=2.10.0", "uvicorn[standard]>=0.32.1", "python-multipart>=0.0.17", "bcrypt>=4.2.1"]
+dependencies = ["fastapi>=0.115.5", "pyjwt[crypto]>=2.10.0", "uvicorn[standard]>=0.32.1", "python-multipart>=0.0.17", "bcrypt>=4.2.1", "fastapi-limiter>=0.1.6"]
 requires-python = "==3.12.*"
 readme = "README.md"
 license = {text = "MIT"}
@@ -13,3 +13,8 @@ license = {text = "MIT"}
 
 [tool.pdm]
 distribution = false
+
+[tool.pdm.scripts]
+redis = {shell = "docker stop redis-slice; docker rm redis-slice; docker run --name redis-slice -p 6379:6379 -d redis redis-server --requirepass dff3b2d5437e66dc9d53eb10caa145f823e7422f6c0074559858cb191be87e19"}
+server = "uvicorn main:app --host 0.0.0.0 --port 8080 --reload"
+all = {composite = ["redis", "server"]}
