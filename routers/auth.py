@@ -1,12 +1,15 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_limiter.depends import RateLimiter
 
 from internal.authlib import authenticate_user, get_current_active_user, get_password_hash, create_access_token
-from dependencies import get_data_base
+from dependencies import get_data_base, get_config
 from models import User, CreateUser, Token
 
-auth = APIRouter()
+config = get_config()
+auth = APIRouter(dependencies=[Depends(RateLimiter(times=config['RATE_LIMIT_PER_MINUTE'], minutes=1))])
+
 
 # TODO: remove in prod
 db = get_data_base()
@@ -14,7 +17,7 @@ db["user1"] = User(username="user1", hashed_password=get_password_hash("pw1"), a
 db["user2"] = User(username="user2", hashed_password=get_password_hash("pw2"), admin=False)
 db["user3"] = User(username="user3", hashed_password=get_password_hash("pw3"), admin=False)
 
-@auth.post("/register")
+@auth.post("/register", )
 def register_user(user: CreateUser, session: dict = Depends(get_data_base)):
     if user.username in session:
         raise HTTPException(status_code=400, detail="User already registered!")
