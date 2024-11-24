@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestFormStrict
 from fastapi_limiter.depends import RateLimiter
 
 from internal.authlib import authenticate_user, get_current_active_user, get_password_hash, create_access_token
@@ -30,7 +30,7 @@ def register_user(user: CreateUser, session: dict = Depends(get_data_base)):
 
 @auth.post("/token")
 async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    form_data: Annotated[OAuth2PasswordRequestFormStrict, Depends()],
     session: dict = Depends(get_data_base),
 ) -> Token:
     user = authenticate_user(session, form_data.username, form_data.password)
