@@ -25,5 +25,6 @@ def read_root():
         "message": "Welcome to P4Slice your framework for creating slice instances!"
     }
 
-
-
+if __name__ == "__main__":
+    # TODO: for production set reload to false
+    uvicorn.run('main:app', host=config['SERVER_URL'], port=int(config['SERVER_PORT']), log_level='info', workers=4, reload=True)

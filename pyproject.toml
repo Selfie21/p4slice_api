@@ -16,5 +16,5 @@ distribution = false
 
 [tool.pdm.scripts]
 redis = {shell = "docker stop redis-slice; docker rm redis-slice; docker run --name redis-slice -p 6379:6379 -d redis redis-server --requirepass dff3b2d5437e66dc9d53eb10caa145f823e7422f6c0074559858cb191be87e19"}
-server = "uvicorn main:app --host 0.0.0.0 --port 8080 --reload"
+server = "python main.py"
 all = {composite = ["redis", "server"]}
