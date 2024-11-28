@@ -23,7 +23,7 @@ class FlowIdentification(BaseModel):
 
 class BaseSlice(BaseModel):
     id: UUID4 = uuid4()
-    slice_index = Optional[int] = None
+    slice_index: Optional[int] = None
     min_bandwidth: float
     max_bandwidth: float
     identification: List[FlowIdentification]

@@ -8,7 +8,7 @@ from loguru import logger
 
 
 SDE_INSTALL = os.environ["SDE_INSTALL"]
-PYTHON3_VER = "{}.{}".format(sys.version_info.major, sys.version_info.minor)
+PYTHON3_VER = "3.8"
 SDE_PYTHON3 = os.path.join(SDE_INSTALL, "lib", "python" + PYTHON3_VER, "site-packages")
 sys.path.append(SDE_PYTHON3)
 sys.path.append(os.path.join(SDE_PYTHON3, "tofino"))
@@ -206,7 +206,7 @@ class Client:
         try:
             table.entry_add(self.target, [key], [data])
         except BfruntimeReadWriteRpcException:
-            logger.error(
+            logger.warning(
                 f"Error adding table entry, likely already exists trying entry_mod()"
             )
             table.entry_mod(self.target, [key], [data])
