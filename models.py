@@ -1,4 +1,4 @@
-from typing import Literal, List
+from typing import Literal, List, Optional
 from ipaddress import IPv4Address, IPv6Address
 from uuid import uuid4
 from pydantic import BaseModel, Field, SecretStr, UUID4
@@ -19,10 +19,11 @@ class FlowIdentification(BaseModel):
     destination_ip: IPv4Address | IPv6Address
     source_port: int
     destination_port: int
-    protocol: Literal["TCP", "UDP", "QUIC"]
+    protocol: Literal["TCP", "UDP"]
 
 class BaseSlice(BaseModel):
     id: UUID4 = uuid4()
+    slice_index = Optional[int] = None
     min_bandwidth: float
     max_bandwidth: float
     identification: List[FlowIdentification]
