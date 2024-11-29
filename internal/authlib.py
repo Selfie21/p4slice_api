@@ -5,7 +5,7 @@ from fastapi import HTTPException, Depends, status
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Annotated
 
-from dependencies import get_config, get_data_base
+from dependencies import get_config, get_user_data_base
 from models import User, TokenData
 
 config = get_config()
@@ -52,7 +52,7 @@ def create_access_token(data: dict) -> str:
 
 async def get_current_active_user(
     token: Annotated[str, Depends(oauth2_scheme)],
-    session: dict = Depends(get_data_base),
+    session: dict = Depends(get_user_data_base),
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

@@ -4,6 +4,7 @@ from pydantic import UUID4
 
 from models import BaseSlice
 from dependencies import get_config
+from internal.controller import Client
 
 config = get_config()
 slice = APIRouter(prefix="/slice", dependencies=[Depends(RateLimiter(times=config.rate_limit_per_minute, minutes=1))])

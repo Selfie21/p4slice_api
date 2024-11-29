@@ -1,4 +1,6 @@
+import sys
 import uvicorn
+from loguru import logger
 import redis.asyncio as redis
 from fastapi_limiter import FastAPILimiter
 from fastapi_limiter.depends import RateLimiter
@@ -6,9 +8,14 @@ from fastapi import FastAPI
 
 from routers.auth import auth
 from routers.slice import slice
-from dependencies import get_config
+from dependencies import get_config, get_client
 
 async def lifespan(_: FastAPI):
+    logger.remove(0)
+    logger.add(sys.stderr, level="DEBUG", diagnose=False)
+    if not get_client():
+        logger.error(f"Unable to connect via gRPC shutting down API")
+        sys.exit(1)
     redis_connection = redis.Redis(host=config.redis_url, port=6379, password=config.redis_password.get_secret_value(), encoding="utf8")
     await FastAPILimiter.init(redis=redis_connection)
     yield

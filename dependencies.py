@@ -1,8 +1,11 @@
 import configparser
 from functools import lru_cache
 from pydantic import ValidationError
+from loguru import logger
+from typing import Optional
 
-from database import user_database
+from internal.controller import Client
+from database import user_database, slice_database
 from models import Configuration
 
 @lru_cache(1)
@@ -17,5 +20,23 @@ def get_config() -> Configuration:
 
 
 @lru_cache(1)
-def get_data_base() -> dict:
+def get_user_data_base() -> dict:
     return user_database
+
+@lru_cache(1)
+def get_slice_data_base() -> dict:
+    return slice_database
+
+@lru_cache(1)
+def get_client() -> Optional[Client]:
+    logger.info(f"Setting up gRPC Client")
+    try:
+        client = Client()
+    except:
+        logger.exception("Exception occured while setting up client!")
+        return None
+    base_info = client.get_base_info()
+    logger.debug(base_info)
+    #port_info = client.get_port_info()
+    #logger.debug(port_info)
+    return client

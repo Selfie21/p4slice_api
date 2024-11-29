@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordRequestFormStrict
 from fastapi_limiter.depends import RateLimiter
 
 from internal.authlib import authenticate_user, get_current_active_user, get_password_hash, create_access_token
-from dependencies import get_data_base, get_config
+from dependencies import get_user_data_base, get_config
 from models import User, CreateUser, Token
 
 config = get_config()
@@ -12,13 +12,13 @@ auth = APIRouter(dependencies=[Depends(RateLimiter(times=config.rate_limit_per_m
 
 
 # TODO: remove in prod
-db = get_data_base()
+db = get_user_data_base()
 db["user1"] = User(username="user1", hashed_password=get_password_hash("pw1"), admin=True)
 db["user2"] = User(username="user2", hashed_password=get_password_hash("pw2"), admin=False)
 db["user3"] = User(username="user3", hashed_password=get_password_hash("pw3"), admin=False)
 
 @auth.post("/register", )
-def register_user(user: CreateUser, session: dict = Depends(get_data_base)):
+def register_user(user: CreateUser, session: dict = Depends(get_user_data_base)):
     if user.username in session:
         raise HTTPException(status_code=400, detail="User already registered!")
 
@@ -31,7 +31,7 @@ def register_user(user: CreateUser, session: dict = Depends(get_data_base)):
 @auth.post("/token")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestFormStrict, Depends()],
-    session: dict = Depends(get_data_base),
+    session: dict = Depends(get_user_data_base),
 ) -> Token:
     user = authenticate_user(session, form_data.username, form_data.password)
     if not user:
