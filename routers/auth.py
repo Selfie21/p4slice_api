@@ -1,15 +1,15 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestFormStrict
-from fastapi_limiter.depends import RateLimiter
+#from fastapi_limiter.depends import RateLimiter
 
 from internal.authlib import authenticate_user, get_current_active_user, get_password_hash, create_access_token
 from dependencies import get_user_data_base, get_config
 from models import User, CreateUser, Token
 
 config = get_config()
-auth = APIRouter(dependencies=[Depends(RateLimiter(times=config.rate_limit_per_minute, minutes=1))])
-
+#auth = APIRouter(dependencies=[Depends(RateLimiter(times=config.rate_limit_per_minute, minutes=1))])
+auth = APIRouter()
 
 # TODO: remove in prod
 db = get_user_data_base()

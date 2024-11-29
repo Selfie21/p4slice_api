@@ -16,10 +16,12 @@ async def lifespan(_: FastAPI):
     if not get_client():
         logger.error(f"Unable to connect via gRPC shutting down API")
         sys.exit(1)
-    redis_connection = redis.Redis(host=config.redis_url, port=6379, password=config.redis_password.get_secret_value(), encoding="utf8")
-    await FastAPILimiter.init(redis=redis_connection)
+    logger.info("Configuring Rate Limiter")
+    #redis_connection = redis.Redis(host=config.redis_url, port=6379, password=config.redis_password.get_secret_value(), encoding="utf8")
+    #await FastAPILimiter.init(redis=redis_connection)
+    logger.info("Startup Complete!")
     yield
-    await FastAPILimiter.close()
+    #await FastAPILimiter.close()
 
 config = get_config()
 app = FastAPI(lifespan=lifespan)
