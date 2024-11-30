@@ -6,6 +6,7 @@ from tabulate import tabulate
 from datetime import datetime, timedelta
 from loguru import logger
 
+from models import FlowIdentification
 
 SDE_INSTALL = os.environ["SDE_INSTALL"]
 PYTHON3_VER = "3.8"
@@ -38,7 +39,7 @@ PARAM_NAME = {
         "$METER_SPEC_PBS_PKTS",
     ],
 }
-
+ANNOTATIONS = ["ipv4", "ipv6", "mac", "bytes"]
 
 class Client:
     # Wrapper to a grpc client connected to the BF Runtime
@@ -166,10 +167,12 @@ class Client:
             pprint(key_dict)
             pprint(data_dict)
 
-    def add_slice(self, dst_addr, src_addr, src_port, dst_port, protocol, slice_id):
+    def add_slice(self, slice_id, src_addr, dst_addr, src_port, dst_port, protocol):
         if not self._valid_slice_id(slice_id):
             raise InvalidInputException("Invalid Slice ID")
         slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
+        slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
+        slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
         slice_ident_key = slice_ident_table.make_key(
             [
                 gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
@@ -204,6 +207,7 @@ class Client:
 
     def add_entry(self, table, key, data):
         try:
+            name = table.info.name_get()
             table.entry_add(self.target, [key], [data])
         except BfruntimeReadWriteRpcException:
             logger.warning(
@@ -211,7 +215,7 @@ class Client:
             )
             table.entry_mod(self.target, [key], [data])
             logger.info("Modified entry succesfully!")
-            logger.info(f"Programmed table sucessfully with the following information:")
+            logger.info(f"Programmed table {name} sucessfully with the following information:")
             self.dump_entry(table=table, key=key)
         except Exception:
             logger.exception(f"Adding entry failed!")
@@ -229,7 +233,7 @@ class Client:
                 gc.DataTuple(PARAM_NAME[meter_type][3], pbs),
             ]
         )
-        meter.entry_add(self.target, [key], [data])
+        self.add_entry(meter, key, data)
 
     def loop_digest(self, base_model):
         while True:
