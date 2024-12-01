@@ -8,14 +8,21 @@ from fastapi import FastAPI
 
 from routers.auth import auth
 from routers.slice import slice
-from dependencies import get_config, get_client
+from dependencies import get_config, get_client, get_slice_data_base
 
 async def lifespan(_: FastAPI):
     logger.remove(0)
     logger.add(sys.stderr, level="DEBUG", diagnose=False)
-    if not get_client():
+    client = get_client()
+    if not client:
         logger.error(f"Unable to connect via gRPC shutting down API")
         sys.exit(1)
+    
+    max_slices = client.size_slice_ident()
+    logger.info(f"Identified MAX_SLICES as {max_slices}")
+    slice_database = get_slice_data_base()
+    slice_database += [None for _ in range(max_slices)]
+
     logger.info("Configuring Rate Limiter")
     redis_connection = redis.Redis(host=config.redis_url, port=6379, password=config.redis_password.get_secret_value(), encoding="utf8")
     await FastAPILimiter.init(redis=redis_connection)

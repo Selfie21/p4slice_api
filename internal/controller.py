@@ -190,6 +190,10 @@ class Client:
         max_slices = slice_ident.info.size_get()
         return slice_id >= 0 and slice_id < int(max_slices)
 
+    def size_slice_ident(self):
+        slice_ident = self.get_table(SLICE_IDENT_TABLE)
+        return slice_ident.info.size_get()
+
     def add_vlan_route(self, vlan_id, dst_addr, port):
         if not self._valid_slice_id(vlan_id):
             raise InvalidInputException("Invalid Slice ID")
