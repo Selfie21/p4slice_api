@@ -1,19 +1,36 @@
 import ipaddress
+from pydantic import UUID4
+from typing import Optional
+
 from models import BaseSlice
+
 
 def ip2int(ip):
     return int(ipaddress.ip_address(ip))
 
+
 def int2ip(ip):
     return ipaddress.ip_address(ip)
 
-def insert_into_database(database: dict, slice: BaseSlice):
-    free_slot = 0
+
+def get_from_database(id: UUID4, database: dict) -> Optional[BaseSlice]:
+    for entry in database:
+        if entry and entry.id == id:
+            return entry
+    return None
+
+
+def insert_into_database(database: dict, slice: BaseSlice) -> Optional[int]:
     for index, entry in enumerate(database):
         if not entry:
-            free_slot = index
-            database[free_slot] = slice
+            database[index] = slice
+            return index
+    return None
 
-    if len(database) == 0:
-        database[free_slot] = slice 
-    return free_slot
+
+def delete_from_database(id: UUID4, database: dict) -> bool:
+    for index, entry in enumerate(database):
+        if entry and entry.id == id:
+            database[index] = None
+            return True
+    return False

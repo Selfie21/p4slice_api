@@ -1,4 +1,4 @@
-from typing import Literal, List, Optional
+from typing import Literal, List, Optional, Annotated
 from ipaddress import IPv4Address, IPv6Address
 from uuid import uuid4
 from pydantic import BaseModel, Field, field_validator, SecretStr, UUID4
@@ -18,8 +18,8 @@ class Configuration(BaseModel):
 class FlowIdentification(BaseModel):
     src_addr: IPv4Address | IPv6Address = Field(alias="source_ip")
     dst_addr: IPv4Address | IPv6Address = Field(alias="destination_ip")
-    src_port: int = Field(alias="source_port")
-    dst_port: int = Field(alias="destination_port")
+    src_port: Annotated[int, Field(strict=True, ge=0, le=65535, alias="source_port")]
+    dst_port: Annotated[int, Field(strict=True, ge=0, le=65535, alias="destination_port")]
     protocol: Literal["ICMP", "TCP", "UDP"]
 
     @field_validator("protocol", mode="after")
@@ -33,11 +33,10 @@ class FlowIdentification(BaseModel):
         return str(raw)
     
 class BaseSlice(BaseModel):
-    id: UUID4 = uuid4()
-    slice_index: Optional[int] = None
-    guaranteed_bandwidth: int = Field(description="guaranteed bandwidth in kilobit/s")
-    max_bandwidth: int = Field(description="maximum bandwidth in kilobit/s")
-    flow_identification: List[FlowIdentification]
+    id: UUID4 = Field(default_factory=uuid4)
+    guaranteed_bandwidth: Annotated[int, Field(strict=True, gt=0, description="guaranteed bandwidth in kilobit/s")]
+    max_bandwidth: Annotated[int, Field(strict=True, gt=0, description="maximum bandwidth in kilobit/s")]
+    flow_identification: Annotated[List[FlowIdentification], Field(min_length=1, max_length=20)]
 
 
 # User Management
@@ -45,7 +44,7 @@ class User(BaseModel):
     username: str = Field(max_length=DEFAULT_LENGTH)
     hashed_password: SecretStr
     admin: bool
-    slice: List[BaseSlice] = []
+    slices: List[UUID4] = []
 
 
 class CreateUser(BaseModel):
