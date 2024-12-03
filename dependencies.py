@@ -8,6 +8,7 @@ from internal.controller import Client
 from database import user_database, slice_database
 from models import Configuration
 
+
 @lru_cache(1)
 def get_config() -> Configuration:
     config = configparser.RawConfigParser()
@@ -23,9 +24,11 @@ def get_config() -> Configuration:
 def get_user_data_base() -> dict:
     return user_database
 
+
 @lru_cache(1)
 def get_slice_data_base() -> dict:
     return slice_database
+
 
 @lru_cache(1)
 def get_client() -> Optional[Client]:
@@ -37,6 +40,6 @@ def get_client() -> Optional[Client]:
         return None
     base_info = client.get_base_info()
     logger.debug(base_info)
-    #port_info = client.get_port_info()
-    #logger.debug(port_info)
+    # port_info = client.get_port_info()
+    # logger.debug(port_info)
     return client
