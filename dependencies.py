@@ -1,6 +1,5 @@
-import configparser
+import json
 from functools import lru_cache
-from pydantic import ValidationError
 from loguru import logger
 from typing import Optional
 
@@ -11,13 +10,12 @@ from models import Configuration
 
 @lru_cache(1)
 def get_config() -> Configuration:
-    config = configparser.RawConfigParser()
-    files_read = config.read("./.env")
-    if files_read:
-        default_section = dict(config["DEFAULT"].items())
-        return Configuration(**default_section)
-    else:
-        FileNotFoundError("Config not found!")
+    with open('./config.json') as f:
+        try:
+            config = json.load(f)
+            return Configuration(**config)
+        except:
+            logger.exception(f"Could not load config!")
 
 
 @lru_cache(1)
@@ -31,13 +29,16 @@ def get_slice_data_base() -> dict:
 
 
 @lru_cache(1)
-def get_client() -> Optional[Client]:
+def get_client(client_no: int = 0) -> Optional[Client]:
+    config = get_config()
     logger.info(f"Setting up gRPC Client")
     try:
-        client = Client()
+        client = Client(grpc_addr=config.grpc_urls[client_no])
     except:
         logger.exception("Exception occured while setting up client!")
         return None
+    
+    logger.debug(f"Connected with client {client_no}, dumping base_info")
     client.get_base_info()
     # port_info = client.get_port_info()
     return client

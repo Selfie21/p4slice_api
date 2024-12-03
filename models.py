@@ -11,6 +11,7 @@ class Configuration(BaseModel):
     rate_limit_per_minute: int
     bandwidth_per_user_kbit: int
     jwt_secret_key: SecretStr
+    grpc_urls: List[str]
     server_url: str
     server_port: int
     redis_url: str
