@@ -1,6 +1,6 @@
 import jwt
 import bcrypt
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
 from fastapi import HTTPException, Depends, status
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Annotated

@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from fastapi_limiter.depends import RateLimiter
-from typing import Annotated, List
+from typing import List
 
-from models import FirewallEntry, User
+from models import FirewallEntry
 from internal.authlib import current_user_is_admin
 from dependencies import get_config, get_client
 

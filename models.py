@@ -1,4 +1,4 @@
-from typing import Literal, List, Optional, Annotated
+from typing import Literal, List, Annotated
 from ipaddress import IPv4Address, IPv6Address
 from uuid import uuid4
 from pydantic import BaseModel, Field, field_validator, SecretStr, UUID4
