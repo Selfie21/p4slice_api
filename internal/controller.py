@@ -1,12 +1,12 @@
 import os
 import sys
+import time
 import socket
 from pprint import pprint
 from tabulate import tabulate
 from datetime import datetime, timedelta
 from loguru import logger
 
-from models import FlowIdentification
 
 SDE_INSTALL = os.environ["SDE_INSTALL"]
 PYTHON3_VER = "3.8"
@@ -21,7 +21,9 @@ DEFAULT_GRPC_ADDRESS = "localhost:50052"
 SLICE_IDENT_TABLE = "Ingress.slice_ident"
 EGRESS_TABLE = "Ingress.egress_check"
 VLAN_TABLE = "Ingress.vlan_exact"
+FIREWALL_TABLE = "Ingress.firewall"
 RETRY_ATTEMPTS = 3
+PROBE_INTERVAL = 10
 FROM_HW = False
 PKT_GEN_PORT = 68
 
@@ -41,9 +43,9 @@ PARAM_NAME = {
 }
 ANNOTATIONS = ["ipv4", "ipv6", "mac", "bytes"]
 
+
 class Client:
     # Wrapper to a grpc client connected to the BF Runtime
-
 
     def __init__(self, grpc_addr=DEFAULT_GRPC_ADDRESS, device_id=0):
         # Add custom bfrt required packages to python path so they are usable
@@ -87,13 +89,13 @@ class Client:
                 table_size = t.info.size_get()
                 data.append([table_name, table_type, table_usage, table_size])
         print(tabulate(data, headers=["Full Table Name", "Type", "Usage", "Capacity"]))
+        return data
 
-    
     def get_port_info(self):
         keys_enabled = []
         port_data = []
         logger.info("Ports that are enabled:")
-        
+
         port_table = self.get_table("$PORT")
         resp = port_table.entry_get(self.target, [], {"from_hw": FROM_HW})
         for data, key in resp:
@@ -101,15 +103,40 @@ class Client:
             data_dict = data.to_dict()
             if data_dict["$PORT_ENABLE"]:
                 keys_enabled.append(key)
-                port_data.append([key_dict, data_dict["$PORT_NAME"], data_dict["$PORT_ENABLE"],data_dict["$PORT_UP"], data_dict["$SPEED"]])
-        
+                port_data.append(
+                    [
+                        key_dict,
+                        data_dict["$PORT_NAME"],
+                        data_dict["$PORT_ENABLE"],
+                        data_dict["$PORT_UP"],
+                        data_dict["$SPEED"],
+                    ]
+                )
+
         port_stat_table = self.get_table("$PORT_STAT")
-        resp = port_stat_table.entry_get(self.target, keys_enabled, {"from_hw": FROM_HW})
+        resp = port_stat_table.entry_get(
+            self.target, keys_enabled, {"from_hw": FROM_HW}
+        )
         for index, (data, _) in enumerate(resp):
             data_dict = data.to_dict()
-            port_data[index] += [data_dict["$FramesReceivedAll"], data_dict["$FramesTransmittedAll"]]
-        print(tabulate(port_data, headers=["Key", "Name", "Enabled", "Up", "Speed", "FramesReceived", "FramesTransmitted"]))
-
+            port_data[index] += [
+                data_dict["$FramesReceivedAll"],
+                data_dict["$FramesTransmittedAll"],
+            ]
+        print(
+            tabulate(
+                port_data,
+                headers=[
+                    "Key",
+                    "Name",
+                    "Enabled",
+                    "Up",
+                    "Speed",
+                    "FramesReceived",
+                    "FramesTransmitted",
+                ],
+            )
+        )
 
     def info_table(self, table):
         logger.info(f"Getting Information on Table: {table.info.name_get()}")
@@ -167,23 +194,50 @@ class Client:
             pprint(key_dict)
             pprint(data_dict)
 
-    def add_slice(self, slice_id, src_addr, dst_addr, src_port, dst_port, protocol):
+    def add_slice_entry(
+        self, slice_id, src_addr, dst_addr, src_port, dst_port, protocol
+    ):
         if not self._valid_slice_id(slice_id):
             raise InvalidInputException("Invalid Slice ID")
         slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
-        slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
-        slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
+        slice_ident_table.info.key_field_annotation_add(
+            field_name="src_addr", custom_annotation="ipv4"
+        )
+        slice_ident_table.info.key_field_annotation_add(
+            field_name="dst_addr", custom_annotation="ipv4"
+        )
         slice_ident_key = slice_ident_table.make_key(
             [
                 gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
                 gc.KeyTuple("hdr.ipv4.dst_addr", dst_addr),
                 gc.KeyTuple("meta.src_port", src_port),
                 gc.KeyTuple("meta.dst_port", dst_port),
-                gc.KeyTuple("hdr.ipv4.protocol", protocol)
+                gc.KeyTuple("hdr.ipv4.protocol", protocol),
             ]
         )
-        slice_ident_data = slice_ident_table.make_data([gc.DataTuple("slice_id", slice_id)], "set_sliceid")
+        slice_ident_data = slice_ident_table.make_data(
+            [gc.DataTuple("slice_id", slice_id)], "set_sliceid"
+        )
         self.add_entry(slice_ident_table, slice_ident_key, slice_ident_data)
+
+    def delete_slice_entry(self, src_addr, dst_addr, src_port, dst_port, protocol):
+        slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
+        slice_ident_table.info.key_field_annotation_add(
+            field_name="src_addr", custom_annotation="ipv4"
+        )
+        slice_ident_table.info.key_field_annotation_add(
+            field_name="dst_addr", custom_annotation="ipv4"
+        )
+        slice_ident_key = slice_ident_table.make_key(
+            [
+                gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
+                gc.KeyTuple("hdr.ipv4.dst_addr", dst_addr),
+                gc.KeyTuple("meta.src_port", src_port),
+                gc.KeyTuple("meta.dst_port", dst_port),
+                gc.KeyTuple("hdr.ipv4.protocol", protocol),
+            ]
+        )
+        self.delete_entry(slice_ident_table, slice_ident_key)
 
     def _valid_slice_id(self, slice_id):
         slice_ident = self.get_table(SLICE_IDENT_TABLE)
@@ -194,20 +248,42 @@ class Client:
         slice_ident = self.get_table(SLICE_IDENT_TABLE)
         return slice_ident.info.size_get()
 
-    def add_vlan_route(self, vlan_id, dst_addr, port):
+    def add_vlan_entry(self, vlan_id, dst_addr, port):
         if not self._valid_slice_id(vlan_id):
             raise InvalidInputException("Invalid Slice ID")
         vlan_table = self.get_table(VLAN_TABLE)
-        vlan_table.info.data_field_annotation_add(field_name="dst_addr", custom_annotation="mac", action_name="vlan_forward")
+        vlan_table.info.data_field_annotation_add(
+            field_name="dst_addr", custom_annotation="mac", action_name="vlan_forward"
+        )
         vlan_table_key = vlan_table.make_key([gc.KeyTuple("hdr.vlan.vlan_id", vlan_id)])
-        vlan_table_data = vlan_table.make_data([gc.DataTuple("dst_addr", dst_addr), gc.DataTuple("port", port)], "vlan_forward")
+        vlan_table_data = vlan_table.make_data(
+            [gc.DataTuple("dst_addr", dst_addr), gc.DataTuple("port", port)],
+            "vlan_forward",
+        )
         self.add_entry(vlan_table, vlan_table_key, vlan_table_data)
 
     def add_egress_entry(self, port):
         egress_table = self.get_table(EGRESS_TABLE)
-        egress_table_key = egress_table.make_key([gc.KeyTuple("ig_tm_md.ucast_egress_port", port)])
+        egress_table_key = egress_table.make_key(
+            [gc.KeyTuple("ig_tm_md.ucast_egress_port", port)]
+        )
         egress_table_data = egress_table.make_data([], "is_egress_border")
         self.add_entry(egress_table, egress_table_key, egress_table_data)
+
+    def add_firewall_entry(self, src_addr, prefix_len):
+        firewall_table = self.get_table(FIREWALL_TABLE)
+        firewall_table.info.key_field_annotation_add(
+            field_name="src_addr", custom_annotation="ipv4"
+        )
+        vlan_table_key = firewall_table.make_key(
+            [
+                gc.KeyTuple(
+                    name="hdr.ipv4.src_addr", value=src_addr, prefix_len=prefix_len
+                )
+            ]
+        )
+        firewall_table_data = firewall_table.make_data([], "drop")
+        self.add_entry(firewall_table, vlan_table_key, firewall_table_data)
 
     def add_entry(self, table, key, data):
         try:
@@ -219,13 +295,22 @@ class Client:
             )
             table.entry_mod(self.target, [key], [data])
             logger.info("Modified entry succesfully!")
-            logger.info(f"Programmed table {name} sucessfully with the following information:")
+            logger.info(
+                f"Programmed table {name} sucessfully with the following information:"
+            )
             self.dump_entry(table=table, key=key)
         except Exception:
             logger.exception(f"Adding entry failed!")
         else:
             logger.info(f"Programmed table sucessfully with the following information:")
             self.dump_entry(table=table, key=key)
+
+    def delete_entry(self, table, key):
+        try:
+            table.entry_del(self.target, [key])
+            logger.info(f"Deleted entry sucessfully!")
+        except Exception:
+            logger.exception(f"Deleting entry failed!")
 
     def program_meter(self, meter, meter_index, meter_type, cir, pir, cbs, pbs):
         key = meter.make_key([gc.KeyTuple("$METER_INDEX", meter_index)])
@@ -240,8 +325,11 @@ class Client:
         self.add_entry(meter, key, data)
 
     def loop_digest(self, base_model):
-        while True:
-            self.single_digest(base_model)
+        probe = []
+        t_end = time.time() + PROBE_INTERVAL
+        while time.time() < t_end:
+            probe.append(self.single_digest(base_model))
+        return probe
 
     def single_digest(self, base_model):
         """
@@ -249,16 +337,16 @@ class Client:
         base_model.info.data_field_annotation_add("srcAddr", "ipv4")
         """
         try:
-            digest = self.interface.digest_get(timeout=10)
+            digest = self.interface.digest_get(timeout=PROBE_INTERVAL)
             device_id = digest.target.device_id
-            pipe_id = digest.target.pipe_id
             data_list = base_model.make_data_list(digest)
 
             for item in data_list:
                 data_dict = item.to_dict()
-                pprint(data_dict)
+                return data_dict
         except RuntimeError:
             logger.info("No digest message received this cycle!")
+            return None
 
     def generate_packets(self, packet, interval_nanoseconds=1000000000):
         logger.info("Configuring packet gen tables to generate Packets")
@@ -309,6 +397,7 @@ class Client:
             "trigger_timer_periodic",
         )
         self.add_entry(pktgen_app, pktgen_app_key, pktgen_app_action_data)
+
 
 class InvalidInputException(Exception):
     pass
