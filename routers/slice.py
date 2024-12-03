@@ -41,7 +41,7 @@ def add_slice(
         )
 
     logger.debug(f"Inserted into the database with index {slice_index}")
-    client.program_meter(
+    meter_insert_state = client.program_meter(
         meter=meter,
         meter_index=slice_index,
         meter_type="bytes",
@@ -50,10 +50,14 @@ def add_slice(
         cbs=BURST_SIZE,
         pbs=BURST_SIZE,
     )
-    client.add_slice_entry(slice_index, **slice.flow_identification[0].model_dump())
-    logger.debug(f"Programmed meter and slice ident table with {slice_index}")
-    current_user.slices.append(slice.id)
-    return {"message": f"Creating slice with id {slice.id} successful!"}
+    slice_insert_state = client.add_slice_entry(slice_index, **slice.flow_identification[0].model_dump())
+
+    if meter_insert_state and slice_insert_state:
+        current_user.slices.append(slice.id)
+        logger.debug(f"Programmed meter and slice ident table with {slice_index}")
+        return {"message": f"Creating slice with id {slice.id} successful!"}
+    else:
+        raise HTTPException(status_code=400, detail="Could not add slice, configuring control plane tables failed!")
 
 
 @slice.delete("/del")
@@ -75,10 +79,13 @@ def delete_slice(
     if slice_info:
         delete_from_database(slice_id, slice_database)
         user_database[current_user.username].slices.remove(slice_id)
-        client.delete_slice_entry(**slice_info.flow_identification[0].model_dump())
-        return {"message": f"Deletion of slice {slice_id} successful!"}
+        slice_delete_status = client.delete_slice_entry(**slice_info.flow_identification[0].model_dump())
+        if slice_delete_status:
+            return {"message": f"Deletion of slice {slice_id} successful!"}
+        else:
+            raise HTTPException(status_code=400, detail=f"Error while deleting {slice_id}, error configuring control plane tables!")  
     else:
-        return {"message": f"Error while deleting {slice_id}, likely slice id is not found!"}
+        raise HTTPException(status_code=404, detail=f"Error while deleting {slice_id}, likely slice id is not found!")
 
 
 @slice.get("/info", response_model=List[BaseSlice])

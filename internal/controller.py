@@ -175,7 +175,7 @@ class Client:
             ]
         )
         slice_ident_data = slice_ident_table.make_data([gc.DataTuple("slice_id", slice_id)], "set_sliceid")
-        self.add_entry(slice_ident_table, slice_ident_key, slice_ident_data)
+        return self.add_entry(slice_ident_table, slice_ident_key, slice_ident_data)
 
     def delete_slice_entry(self, src_addr, dst_addr, src_port, dst_port, protocol):
         slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
@@ -190,7 +190,7 @@ class Client:
                 gc.KeyTuple("hdr.ipv4.protocol", protocol),
             ]
         )
-        self.delete_entry(slice_ident_table, slice_ident_key)
+        return self.delete_entry(slice_ident_table, slice_ident_key)
 
     def _valid_slice_id(self, slice_id):
         slice_ident = self.get_table(SLICE_IDENT_TABLE)
@@ -208,20 +208,20 @@ class Client:
         vlan_table.info.data_field_annotation_add(field_name="dst_addr", custom_annotation="mac", action_name="vlan_forward")
         vlan_table_key = vlan_table.make_key([gc.KeyTuple("hdr.vlan.vlan_id", vlan_id)])
         vlan_table_data = vlan_table.make_data([gc.DataTuple("dst_addr", dst_addr), gc.DataTuple("port", port)],"vlan_forward")
-        self.add_entry(vlan_table, vlan_table_key, vlan_table_data)
+        return self.add_entry(vlan_table, vlan_table_key, vlan_table_data)
 
     def add_egress_entry(self, port):
         egress_table = self.get_table(EGRESS_TABLE)
         egress_table_key = egress_table.make_key([gc.KeyTuple("ig_tm_md.ucast_egress_port", port)])
         egress_table_data = egress_table.make_data([], "is_egress_border")
-        self.add_entry(egress_table, egress_table_key, egress_table_data)
+        return self.add_entry(egress_table, egress_table_key, egress_table_data)
 
     def add_firewall_entry(self, src_addr, prefix_len):
         firewall_table = self.get_table(FIREWALL_TABLE)
         firewall_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
         vlan_table_key = firewall_table.make_key([gc.KeyTuple(name="hdr.ipv4.src_addr", value=src_addr, prefix_len=prefix_len)])
         firewall_table_data = firewall_table.make_data([], "drop")
-        self.add_entry(firewall_table, vlan_table_key, firewall_table_data)
+        return self.add_entry(firewall_table, vlan_table_key, firewall_table_data)
 
     def add_entry(self, table, key, data):
         try:
@@ -233,18 +233,23 @@ class Client:
             logger.info("Modified entry succesfully!")
             logger.info(f"Programmed table {name} sucessfully with the following information:")
             self.dump_entry(table=table, key=key)
+            return True
         except Exception:
             logger.exception(f"Adding entry failed!")
+            return False
         else:
             logger.info(f"Programmed table sucessfully with the following information:")
             self.dump_entry(table=table, key=key)
+            return True
 
     def delete_entry(self, table, key):
         try:
             table.entry_del(self.target, [key])
             logger.info(f"Deleted entry sucessfully!")
+            return True
         except Exception:
             logger.exception(f"Deleting entry failed!")
+            return False
 
     def program_meter(self, meter, meter_index, meter_type, cir, pir, cbs, pbs):
         key = meter.make_key([gc.KeyTuple("$METER_INDEX", meter_index)])
@@ -256,7 +261,7 @@ class Client:
                 gc.DataTuple(PARAM_NAME[meter_type][3], pbs),
             ]
         )
-        self.add_entry(meter, key, data)
+        return self.add_entry(meter, key, data)
 
     def loop_digest(self, base_model):
         probe = []
