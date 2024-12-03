@@ -21,6 +21,7 @@ async def lifespan(_: FastAPI):
 
     max_slices = client.size_slice_ident()
     logger.info(f"Identified MAX_SLICES as {max_slices}")
+    logger.info(f"MAX_BANDWIDTH_PER_USER is {config.bandwidth_per_user_kbit / 1000} Mbit/s")
     slice_database = get_slice_data_base()
     slice_database += [None for _ in range(max_slices)]
 

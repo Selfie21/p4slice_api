@@ -1,17 +1,7 @@
-import ipaddress
 from pydantic import UUID4
-from typing import Optional
+from typing import Optional, List
 
 from models import BaseSlice
-
-
-def ip2int(ip):
-    return int(ipaddress.ip_address(ip))
-
-
-def int2ip(ip):
-    return ipaddress.ip_address(ip)
-
 
 def get_from_database(id: UUID4, database: dict) -> Optional[BaseSlice]:
     for entry in database:
@@ -34,3 +24,11 @@ def delete_from_database(id: UUID4, database: dict) -> bool:
             database[index] = None
             return True
     return False
+
+def used_bandwidth(slices: List[UUID4], database: dict) -> bool:
+    total_bandwidth = 0
+    for slice in slices:
+        slice_data = get_from_database(slice, database) 
+        if slice_data:
+            total_bandwidth += slice_data.max_bandwidth
+    return total_bandwidth

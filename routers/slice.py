@@ -6,7 +6,7 @@ from loguru import logger
 
 from models import BaseSlice, User
 from dependencies import get_config, get_client, get_slice_data_base, get_user_data_base
-from internal.util import get_from_database, insert_into_database, delete_from_database
+from internal.util import get_from_database, insert_into_database, delete_from_database, used_bandwidth
 from internal.authlib import get_current_active_user
 
 config = get_config()
@@ -23,6 +23,14 @@ def add_slice(
     slice: BaseSlice,
     slice_database: dict = Depends(get_slice_data_base),
 ):
+    
+    total_bandwidth = used_bandwidth(current_user.slices, slice_database)
+    if (total_bandwidth + slice.max_bandwidth) > config.bandwidth_per_user_kbit:
+        raise HTTPException(
+            status_code=417,
+            detail=f"Could not add slice! User exceeded maximum bandwidth per user (current usage {total_bandwidth/1000} mbit/s and maximum is {config.bandwidth_per_user_kbit/1000} mbit/s)",
+        )
+    
     client = get_client()
     meter = client.get_table("Ingress.meter")
     slice_index = insert_into_database(slice_database, slice)
@@ -70,16 +78,11 @@ def delete_slice(
         client.delete_slice_entry(**slice_info.flow_identification[0].model_dump())
         return {"message": f"Deletion of slice {slice_id} successful!"}
     else:
-        return {
-            "message": f"Error while deleting {slice_id}, likely slice id is not found!"
-        }
+        return {"message": f"Error while deleting {slice_id}, likely slice id is not found!"}
 
 
 @slice.get("/info", response_model=List[BaseSlice])
-def info_slice(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-    slice_database: dict = Depends(get_slice_data_base),
-):
+def info_slice(current_user: Annotated[User, Depends(get_current_active_user)], slice_database: dict = Depends(get_slice_data_base)):
     tmp = []
     for slice_id in current_user.slices:
         tmp.append(get_from_database(slice_id, slice_database))
@@ -88,8 +91,5 @@ def info_slice(
 
 # TODO: only used for debug remove in prod
 @slice.get("/database")
-def info_slice(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-    slice_database: dict = Depends(get_slice_data_base),
-):
+def info_slice(current_user: Annotated[User, Depends(get_current_active_user)], slice_database: dict = Depends(get_slice_data_base)):
     return slice_database

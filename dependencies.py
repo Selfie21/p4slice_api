@@ -38,8 +38,6 @@ def get_client() -> Optional[Client]:
     except:
         logger.exception("Exception occured while setting up client!")
         return None
-    base_info = client.get_base_info()
-    logger.debug(base_info)
+    client.get_base_info()
     # port_info = client.get_port_info()
-    # logger.debug(port_info)
     return client

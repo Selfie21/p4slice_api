@@ -19,15 +19,9 @@ auth = APIRouter(
 
 # TODO: remove in prod
 db = get_user_data_base()
-db["user1"] = User(
-    username="user1", hashed_password=get_password_hash("pw1"), admin=True
-)
-db["user2"] = User(
-    username="user2", hashed_password=get_password_hash("pw2"), admin=False
-)
-db["user3"] = User(
-    username="user3", hashed_password=get_password_hash("pw3"), admin=False
-)
+db["user1"] = User(username="user1", hashed_password=get_password_hash("pw1"), admin=True)
+db["user2"] = User(username="user2", hashed_password=get_password_hash("pw2"), admin=False)
+db["user3"] = User(username="user3", hashed_password=get_password_hash("pw3"), admin=False)
 
 
 @auth.post("/register")
@@ -36,18 +30,13 @@ def register_user(user: CreateUser, session: dict = Depends(get_user_data_base))
         raise HTTPException(status_code=400, detail="User already registered!!")
 
     encrypted_password = get_password_hash(user.password)
-    new_user = User(
-        username=user.username, hashed_password=encrypted_password, admin=False
-    )
+    new_user = User(username=user.username, hashed_password=encrypted_password, admin=False)
     session[user.username] = new_user
     return {"message": "User created successfully"}
 
 
 @auth.post("/token")
-async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestFormStrict, Depends()],
-    session: dict = Depends(get_user_data_base),
-) -> Token:
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestFormStrict, Depends()], session: dict = Depends(get_user_data_base)) -> Token:
     user = authenticate_user(session, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -60,7 +49,5 @@ async def login_for_access_token(
 
 
 @auth.get("/info", response_model=User)
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-) -> User:
+async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]) -> User:
     return current_user
