@@ -30,12 +30,10 @@ db["user3"] = User(
 )
 
 
-@auth.post(
-    "/register",
-)
+@auth.post("/register")
 def register_user(user: CreateUser, session: dict = Depends(get_user_data_base)):
     if user.username in session:
-        raise HTTPException(status_code=400, detail="User already registered!")
+        raise HTTPException(status_code=400, detail="User already registered!!")
 
     encrypted_password = get_password_hash(user.password)
     new_user = User(

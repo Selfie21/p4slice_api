@@ -103,40 +103,17 @@ class Client:
             data_dict = data.to_dict()
             if data_dict["$PORT_ENABLE"]:
                 keys_enabled.append(key)
-                port_data.append(
-                    [
-                        key_dict,
-                        data_dict["$PORT_NAME"],
-                        data_dict["$PORT_ENABLE"],
-                        data_dict["$PORT_UP"],
-                        data_dict["$SPEED"],
-                    ]
-                )
+                port_data.append([key_dict, data_dict["$PORT_NAME"], data_dict["$PORT_ENABLE"], data_dict["$PORT_UP"], data_dict["$SPEED"]])
 
         port_stat_table = self.get_table("$PORT_STAT")
-        resp = port_stat_table.entry_get(
-            self.target, keys_enabled, {"from_hw": FROM_HW}
-        )
+        resp = port_stat_table.entry_get(self.target, keys_enabled, {"from_hw": FROM_HW})
         for index, (data, _) in enumerate(resp):
             data_dict = data.to_dict()
             port_data[index] += [
                 data_dict["$FramesReceivedAll"],
                 data_dict["$FramesTransmittedAll"],
             ]
-        print(
-            tabulate(
-                port_data,
-                headers=[
-                    "Key",
-                    "Name",
-                    "Enabled",
-                    "Up",
-                    "Speed",
-                    "FramesReceived",
-                    "FramesTransmitted",
-                ],
-            )
-        )
+        print(tabulate(port_data, headers=["Key", "Name", "Enabled", "Up", "Speed", "FramesReceived", "FramesTransmitted"]))
 
     def info_table(self, table):
         logger.info(f"Getting Information on Table: {table.info.name_get()}")
@@ -152,12 +129,7 @@ class Client:
             df_size = table_info.key_field_size_get(key_field)
             kf_match_type = table_info.key_field_match_type_get(key_field)
             key_field_info.append((key_field, df_type, df_size[1], kf_match_type))
-        print(
-            tabulate(
-                key_field_info,
-                headers=["Key Field Name", "Type", "Size (bits)", "Match Type"],
-            )
-        )
+        print(tabulate(key_field_info, headers=["Key Field Name", "Type", "Size (bits)", "Match Type"]))
 
         action_info = []
         for action in table_info.action_name_list_get():
@@ -165,16 +137,9 @@ class Client:
             for data_field in table_info.data_field_name_list_get(action):
                 df_type = table_info.data_field_type_get(data_field, action_name=action)
                 df_size = table_info.data_field_size_get(data_field, action_name=action)
-                df_required = table_info.data_field_mandatory_get(
-                    data_field, action_name=action
-                )
+                df_required = table_info.data_field_mandatory_get(data_field, action_name=action)
                 action_info.append((data_field, df_type, df_size[1], df_required))
-            print(
-                tabulate(
-                    action_info,
-                    headers=["Data Field Name", "Type", "Size (bits)", "Required"],
-                )
-            )
+            print(tabulate( action_info, headers=["Data Field Name", "Type", "Size (bits)", "Required"]))
 
     def dump_table(self, table):
         logger.info(f"Dumping Table: {table.info.name_get()}")
@@ -194,18 +159,12 @@ class Client:
             pprint(key_dict)
             pprint(data_dict)
 
-    def add_slice_entry(
-        self, slice_id, src_addr, dst_addr, src_port, dst_port, protocol
-    ):
+    def add_slice_entry(self, slice_id, src_addr, dst_addr, src_port, dst_port, protocol):
         if not self._valid_slice_id(slice_id):
             raise InvalidInputException("Invalid Slice ID")
         slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
-        slice_ident_table.info.key_field_annotation_add(
-            field_name="src_addr", custom_annotation="ipv4"
-        )
-        slice_ident_table.info.key_field_annotation_add(
-            field_name="dst_addr", custom_annotation="ipv4"
-        )
+        slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
+        slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
         slice_ident_key = slice_ident_table.make_key(
             [
                 gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
@@ -215,19 +174,13 @@ class Client:
                 gc.KeyTuple("hdr.ipv4.protocol", protocol),
             ]
         )
-        slice_ident_data = slice_ident_table.make_data(
-            [gc.DataTuple("slice_id", slice_id)], "set_sliceid"
-        )
+        slice_ident_data = slice_ident_table.make_data([gc.DataTuple("slice_id", slice_id)], "set_sliceid")
         self.add_entry(slice_ident_table, slice_ident_key, slice_ident_data)
 
     def delete_slice_entry(self, src_addr, dst_addr, src_port, dst_port, protocol):
         slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
-        slice_ident_table.info.key_field_annotation_add(
-            field_name="src_addr", custom_annotation="ipv4"
-        )
-        slice_ident_table.info.key_field_annotation_add(
-            field_name="dst_addr", custom_annotation="ipv4"
-        )
+        slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
+        slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
         slice_ident_key = slice_ident_table.make_key(
             [
                 gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
@@ -252,36 +205,21 @@ class Client:
         if not self._valid_slice_id(vlan_id):
             raise InvalidInputException("Invalid Slice ID")
         vlan_table = self.get_table(VLAN_TABLE)
-        vlan_table.info.data_field_annotation_add(
-            field_name="dst_addr", custom_annotation="mac", action_name="vlan_forward"
-        )
+        vlan_table.info.data_field_annotation_add(field_name="dst_addr", custom_annotation="mac", action_name="vlan_forward")
         vlan_table_key = vlan_table.make_key([gc.KeyTuple("hdr.vlan.vlan_id", vlan_id)])
-        vlan_table_data = vlan_table.make_data(
-            [gc.DataTuple("dst_addr", dst_addr), gc.DataTuple("port", port)],
-            "vlan_forward",
-        )
+        vlan_table_data = vlan_table.make_data([gc.DataTuple("dst_addr", dst_addr), gc.DataTuple("port", port)],"vlan_forward")
         self.add_entry(vlan_table, vlan_table_key, vlan_table_data)
 
     def add_egress_entry(self, port):
         egress_table = self.get_table(EGRESS_TABLE)
-        egress_table_key = egress_table.make_key(
-            [gc.KeyTuple("ig_tm_md.ucast_egress_port", port)]
-        )
+        egress_table_key = egress_table.make_key([gc.KeyTuple("ig_tm_md.ucast_egress_port", port)])
         egress_table_data = egress_table.make_data([], "is_egress_border")
         self.add_entry(egress_table, egress_table_key, egress_table_data)
 
     def add_firewall_entry(self, src_addr, prefix_len):
         firewall_table = self.get_table(FIREWALL_TABLE)
-        firewall_table.info.key_field_annotation_add(
-            field_name="src_addr", custom_annotation="ipv4"
-        )
-        vlan_table_key = firewall_table.make_key(
-            [
-                gc.KeyTuple(
-                    name="hdr.ipv4.src_addr", value=src_addr, prefix_len=prefix_len
-                )
-            ]
-        )
+        firewall_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
+        vlan_table_key = firewall_table.make_key([gc.KeyTuple(name="hdr.ipv4.src_addr", value=src_addr, prefix_len=prefix_len)])
         firewall_table_data = firewall_table.make_data([], "drop")
         self.add_entry(firewall_table, vlan_table_key, firewall_table_data)
 
@@ -290,14 +228,10 @@ class Client:
             name = table.info.name_get()
             table.entry_add(self.target, [key], [data])
         except BfruntimeReadWriteRpcException:
-            logger.warning(
-                f"Error adding table entry, likely already exists trying entry_mod()"
-            )
+            logger.warning(f"Error adding table entry, likely already exists trying entry_mod()")
             table.entry_mod(self.target, [key], [data])
             logger.info("Modified entry succesfully!")
-            logger.info(
-                f"Programmed table {name} sucessfully with the following information:"
-            )
+            logger.info(f"Programmed table {name} sucessfully with the following information:")
             self.dump_entry(table=table, key=key)
         except Exception:
             logger.exception(f"Adding entry failed!")
@@ -355,12 +289,8 @@ class Client:
         pktgen_app = self.get_table("tf1.pktgen.app_cfg")
 
         logger.info(f"Sending out packets with length: {len(packet)}")
-        pktgen_port_key = pktgen_port.make_key(
-            [gc.KeyTuple("dev_port", self.PKT_GEN_PORT)]
-        )
-        pktgen_port_action_data = pktgen_port.make_data(
-            [gc.DataTuple("pktgen_enable", bool_val=True)]
-        )
+        pktgen_port_key = pktgen_port.make_key([gc.KeyTuple("dev_port", self.PKT_GEN_PORT)])
+        pktgen_port_action_data = pktgen_port.make_data([gc.DataTuple("pktgen_enable", bool_val=True)])
         self.add_entry(pktgen_port, pktgen_port_key, pktgen_port_action_data)
 
         offset = 0
@@ -370,9 +300,7 @@ class Client:
                 gc.KeyTuple("pkt_buffer_size", len(packet)),
             ]
         )
-        pktgen_pkt_buf_action_data = pktgen_buffer.make_data(
-            [gc.DataTuple("buffer", bytearray(bytes(packet)))]
-        )
+        pktgen_pkt_buf_action_data = pktgen_buffer.make_data([gc.DataTuple("buffer", bytearray(bytes(packet)))])
         self.add_entry(pktgen_buffer, pktgen_pkt_buf_key, pktgen_pkt_buf_action_data)
 
         pktgen_app_key = pktgen_app.make_key([gc.KeyTuple("app_id", 0)])
