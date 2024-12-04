@@ -4,6 +4,9 @@ services:
   redis:
     image: redis:latest
     container_name: redis
+    command: ["redis-server", "--requirepass", "my_secure_password"]
+    environment:
+      - REDIS_PASSWORD=my_secure_password
     network_mode: host
     ports:
       - "6379:6379"
@@ -13,15 +16,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fastapi-app
+    container_name: p4slice-api
     network_mode: host
     ports:
       - "8080:8080"
-    environment:
-      - REDIS_URL=redis:6379
-      - SERVER_URL=127.0.0.1
-      - SERVER_PORT=8080
-      - GRPC_URLS=127.0.0.1:50052
     depends_on:
       - redis
     restart: always
