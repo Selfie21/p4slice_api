@@ -1,0 +1,8 @@
+{"rate_limit_per_minute": 20,
+"bandwidth_per_user_kbit": 10000000,
+"jwt_secret_key": "a8887a89e4f5c370861657aa75dd9f3f80bf632d19cea0b4fe69e38b876e7f5f",
+"grpc_urls": ["127.0.0.1:50052"],
+"server_url": "127.0.0.1",
+"server_port": 8080,
+"redis_url":"127.0.0.1",
+"redis_password": "dff3b2d5437e66dc9d53eb10caa145f823e7422f6c0074559858cb191be87e19"}

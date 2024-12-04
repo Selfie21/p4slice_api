@@ -6,9 +6,10 @@ from tabulate import tabulate
 from loguru import logger
 
 
-SDE_INSTALL = os.environ["SDE_INSTALL"]
-PYTHON3_VER = "3.8"
-SDE_PYTHON3 = os.path.join(SDE_INSTALL, "lib", "python" + PYTHON3_VER, "site-packages")
+#SDE_INSTALL = os.environ["SDE_INSTALL"]
+#PYTHON3_VER = "3.8"
+#SDE_PYTHON3 = os.path.join(SDE_INSTALL, "lib", "python" + PYTHON3_VER, "site-packages")
+SDE_PYTHON3 = "/bfrt_packages/site-packages"
 sys.path.append(SDE_PYTHON3)
 sys.path.append(os.path.join(SDE_PYTHON3, "tofino"))
 sys.path.append(os.path.join(SDE_PYTHON3, "tofino", "bfrt_grpc"))
@@ -61,7 +62,7 @@ class Client:
             logger.info(f"The target runs the program {self.bfrt_info.p4_name_get()}")
             self.interface.bind_pipeline_config(self.bfrt_info.p4_name_get())
             logger.info(f"Connected to BF Runtime Server as client {client_id}")
-        except Exception as e:
+        except Exception:
             logger.exception(f"Could not connect to BF Runtime server - exiting")
             self.interface = None
             sys.exit(1)
@@ -147,7 +148,6 @@ class Client:
             data_dict = data.to_dict()
             pprint(key_dict)
             pprint(data_dict)
-            print()
 
     def dump_entry(self, table, key):
         resp = table.entry_get(self.target, [key], {"from_hw": FROM_HW})
@@ -275,7 +275,6 @@ class Client:
         """
         try:
             digest = self.interface.digest_get(timeout=PROBE_INTERVAL)
-            device_id = digest.target.device_id
             data_list = base_model.make_data_list(digest)
 
             for item in data_list:
