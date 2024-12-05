@@ -221,6 +221,12 @@ class Client:
         firewall_table_data = firewall_table.make_data([], "drop")
         return self.add_entry(firewall_table, vlan_table_key, firewall_table_data)
 
+    def add_mfilter_entry(self, meter_tag):
+        m_filter = self.get_table("Ingress.m_filter")
+        m_filter_key = m_filter.make_key([gc.KeyTuple("meta.meter_tag", meter_tag)])
+        m_filter_data = m_filter.make_data([], "drop")
+        return self.add_entry(m_filter, m_filter_key, m_filter_data)
+
     def add_entry(self, table, key, data):
         try:
             name = table.info.name_get()
