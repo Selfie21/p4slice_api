@@ -9,8 +9,8 @@ from internal.authlib import (
     get_password_hash,
     create_access_token,
 )
-from dependencies import get_user_data_base, get_config
-from models import User, CreateUser, Token
+from core.dependencies import get_user_data_base, get_config
+from core.models import User, CreateUser, Token
 
 config = get_config()
 auth = APIRouter(

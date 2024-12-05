@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from routers.auth import auth
 from routers.slice import slice
 from routers.admin import admin
-from dependencies import get_config, get_client, get_slice_data_base
+from core.dependencies import get_config, get_client, get_slice_data_base
 
 
 async def lifespan(_: FastAPI):

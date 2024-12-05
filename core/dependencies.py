@@ -4,8 +4,8 @@ from loguru import logger
 from typing import Optional
 
 from internal.controller import Client
-from database import user_database, slice_database
-from models import Configuration
+from core.database import user_database, slice_database
+from core.models import Configuration
 
 
 @lru_cache(1)

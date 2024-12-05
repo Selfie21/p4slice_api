@@ -1,7 +1,7 @@
 from pydantic import UUID4
 from typing import Optional, List
 
-from models import BaseSlice
+from core.models import BaseSlice
 
 def get_from_database(id: UUID4, database: dict) -> Optional[BaseSlice]:
     for entry in database:

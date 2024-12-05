@@ -5,8 +5,8 @@ from fastapi import HTTPException, Depends, status
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Annotated
 
-from dependencies import get_config, get_user_data_base
-from models import User, TokenData
+from core.dependencies import get_config, get_user_data_base
+from core.models import User, TokenData
 
 config = get_config()
 SECRET_KEY = config.jwt_secret_key.get_secret_value()

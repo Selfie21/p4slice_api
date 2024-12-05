@@ -4,8 +4,8 @@ from pydantic import UUID4
 from typing import Annotated, List
 from loguru import logger
 
-from models import BaseSlice, User
-from dependencies import get_config, get_client, get_slice_data_base, get_user_data_base
+from core.models import BaseSlice, User
+from core.dependencies import get_config, get_client, get_slice_data_base, get_user_data_base
 from internal.util import get_from_database, insert_into_database, delete_from_database, used_bandwidth
 from internal.authlib import get_current_active_user
 
