@@ -6,10 +6,10 @@ from tabulate import tabulate
 from loguru import logger
 
 
-#SDE_INSTALL = os.environ["SDE_INSTALL"]
-#PYTHON3_VER = "3.8"
-#SDE_PYTHON3 = os.path.join(SDE_INSTALL, "lib", "python" + PYTHON3_VER, "site-packages")
-SDE_PYTHON3 = "/bfrt_packages/site-packages"
+SDE_INSTALL = os.environ["SDE_INSTALL"]
+PYTHON3_VER = "3.8"
+SDE_PYTHON3 = os.path.join(SDE_INSTALL, "lib", "python" + PYTHON3_VER, "site-packages")
+#SDE_PYTHON3 = "/bfrt_packages/site-packages"
 sys.path.append(SDE_PYTHON3)
 sys.path.append(os.path.join(SDE_PYTHON3, "tofino"))
 sys.path.append(os.path.join(SDE_PYTHON3, "tofino", "bfrt_grpc"))
