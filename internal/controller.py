@@ -268,10 +268,14 @@ class Client:
         return self.add_entry(meter, key, data)
 
     def loop_digest(self, base_model):
-        probe = []
+        probe = {}
         t_end = time.time() + PROBE_INTERVAL
         while time.time() < t_end:
-            probe.append(self.single_digest(base_model))
+            digest = self.single_digest(base_model)
+            if digest:
+                hash_digest = hash(tuple(sorted(digest.items())))
+                if not hash_digest in probe:
+                    probe[hash_digest] = digest
         return probe
 
     def single_digest(self, base_model):
