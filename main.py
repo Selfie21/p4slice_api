@@ -19,6 +19,8 @@ async def lifespan(_: FastAPI):
         logger.error(f"Unable to connect via gRPC shutting down API")
         sys.exit(1)
 
+    logger.debug(f"Configuring m_filter to drop packets with classification RED/3")
+    client.add_mfilter_entry(3)
     max_slices = client.size_slice_ident()
     logger.info(f"Identified MAX_SLICES as {max_slices}")
     logger.info(f"MAX_BANDWIDTH_PER_USER is {config.bandwidth_per_user_kbit / 1000} Mbit/s")
