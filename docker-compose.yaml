@@ -1,13 +1,10 @@
-version: '3.8'
-
 services:
   redis:
     image: redis:latest
     container_name: redis
-    command: ["redis-server", "--requirepass", "my_secure_password"]
-    environment:
-      - REDIS_PASSWORD=my_secure_password
-    network_mode: host
+    networks:
+      - p4slice
+    command: ["redis-server", "--requirepass", "dff3b2d5437e66dc9d53eb10caa145f823e7422f6c0074559858cb191be87e19"]
     ports:
       - "6379:6379"
     restart: always
@@ -17,9 +14,14 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: p4slice-api
-    network_mode: host
+    networks:
+      - p4slice
     ports:
       - "8080:8080"
     depends_on:
       - redis
     restart: always
+
+
+networks:
+  p4slice: {}

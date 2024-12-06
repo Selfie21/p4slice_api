@@ -28,7 +28,7 @@ async def lifespan(_: FastAPI):
     slice_database = get_slice_data_base()
     slice_database += [None for _ in range(max_slices)]
 
-    logger.info("Configuring Rate Limiter")
+    logger.info(f"Connecting to redis on {config.redis_url}:6379")
     redis_connection = redis.Redis(
         host=config.redis_url,
         port=6379,
