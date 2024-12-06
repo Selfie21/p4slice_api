@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from fastapi_limiter.depends import RateLimiter
-from typing import List
+from typing import List, Dict
 
 from internal.authlib import current_user_is_admin
-from core.dependencies import get_config, get_client
+from core.dependencies import get_config, get_client, get_base_model
 from core.models import FirewallEntry
 
 config = get_config()
@@ -16,13 +16,12 @@ admin = APIRouter(
 )
 
 
-@admin.get("/monitor", response_model=List)
-def monitor():
+@admin.get("/monitor", response_model=Dict)
+def monitor(base_model = Depends(get_base_model)):
     client = get_client()
-    base_model = client.bfrt_info.learn_get("digest_inst")
     probe = client.loop_digest(base_model)
     if not probe:
-        probe.append("No digests received!")
+        return {"message": "No digests consumed!"}
     return probe
 
 

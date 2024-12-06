@@ -289,6 +289,8 @@ class Client:
 
             for item in data_list:
                 data_dict = item.to_dict()
+                data_dict.pop('action_name', None)
+                data_dict.pop('is_default_entry', None)
                 return data_dict
         except RuntimeError:
             logger.info("No digest message received this cycle!")

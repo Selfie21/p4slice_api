@@ -1,9 +1,10 @@
 import sys
 import uvicorn
-from loguru import logger
 import redis.asyncio as redis
 from fastapi_limiter import FastAPILimiter
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from loguru import logger
 
 from routers.auth import auth
 from routers.slice import slice
@@ -52,6 +53,12 @@ def read_root():
     return {
         "message": "Welcome to P4Slice your framework for creating slice instances!"
     }
+
+favicon_path = './favicon.ico'
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse(favicon_path)
 
 
 if __name__ == "__main__":
