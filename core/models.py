@@ -2,6 +2,7 @@ from typing import Literal, List, Annotated
 from ipaddress import IPv4Address, IPv6Address
 from uuid import uuid4
 from pydantic import BaseModel, Field, field_validator, SecretStr, UUID4
+from pydantic_extra_types.mac_address import MacAddress
 
 DEFAULT_LENGTH = 50
 PROTOCOL_MAPPING = {"ICMP": 1, "TCP": 6, "UDP": 17}
@@ -52,6 +53,12 @@ class FirewallEntry(BaseModel):
     @classmethod
     def ip_to_str(cls, raw: IPv4Address | IPv6Address) -> str:
         return str(raw)
+
+
+class VlanEntry(BaseModel):
+    vlan_id: int
+    dst_addr: MacAddress
+    port : Annotated[int, Field(strict=True, ge=0, le=400)]
 
 
 # User Management

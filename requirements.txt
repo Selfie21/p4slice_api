@@ -13,9 +13,10 @@ h11==0.14.0
 httptools==0.6.4
 idna==3.10
 loguru==0.7.2
-protobuf==5.29.0
+protobuf==5.29.1
 pycparser==2.22
 pydantic==2.10.3
+pydantic-extra-types==2.10.1
 pydantic_core==2.27.1
 PyJWT==2.10.1
 python-dotenv==1.0.1
