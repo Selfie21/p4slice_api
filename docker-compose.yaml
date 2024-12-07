@@ -20,7 +20,7 @@ services:
       - api_config
     environment:
       CONFIG_PATH: "/api_config"
-    restart: always
+    restart: on-failure:3
 
 configs:
   api_config:
