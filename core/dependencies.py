@@ -1,3 +1,4 @@
+import os
 import json
 from functools import lru_cache
 from loguru import logger
@@ -32,7 +33,8 @@ def get_base_model():
 
 @lru_cache(1)
 def get_config() -> Configuration:
-    with open("./config.json") as f:
+    config_path = os.environ.get('CONFIG_PATH')
+    with open(config_path) as f:
         try:
             config = json.load(f)
             return Configuration(**config)

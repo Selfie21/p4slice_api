@@ -16,5 +16,12 @@ services:
       - 8080:8080
     depends_on:
       - redis
+    configs:
+      - api_config
+    environment:
+      CONFIG_PATH: "/api_config"
     restart: always
 
+configs:
+  api_config:
+    file: ./config.json
