@@ -62,12 +62,11 @@ async def favicon():
 
 
 if __name__ == "__main__":
-    # TODO: for production set reload to false
     uvicorn.run(
         "main:app",
         host=config.server_url,
         port=config.server_port,
         log_level="info",
-        workers=4,
-        reload=True,
+        workers=1,
+        reload=False,
     )
