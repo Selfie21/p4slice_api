@@ -43,9 +43,9 @@ ANNOTATIONS = ["ipv4", "ipv6", "mac", "bytes"]
 class Client:
     # Wrapper to a grpc client connected to the BF Runtime
 
-    def __init__(self, grpc_addr=DEFAULT_GRPC_ADDRESS, device_id=0):
+    def __init__(self, grpc_addr=DEFAULT_GRPC_ADDRESS, client_id=0):
         # Add custom bfrt required packages to python path so they are usable
-        client_id = 0
+        device_id = 0
         try:
             self.interface = gc.ClientInterface(
                 grpc_addr=grpc_addr,
