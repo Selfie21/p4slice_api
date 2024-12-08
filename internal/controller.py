@@ -17,6 +17,7 @@ DEFAULT_GRPC_ADDRESS = "localhost:50052"
 SLICE_IDENT_TABLE = "Ingress.slice_ident"
 EGRESS_TABLE = "Ingress.egress_check"
 VLAN_TABLE = "Ingress.vlan_exact"
+IP_TABLE = "Ingress.ipv4_lpm"
 FIREWALL_TABLE = "Ingress.firewall"
 RETRY_ATTEMPTS = 3
 PROBE_INTERVAL = 10
@@ -197,15 +198,23 @@ class Client:
         slice_ident = self.get_table(SLICE_IDENT_TABLE)
         return slice_ident.info.size_get()
 
-    def add_vlan_entry(self, vlan_id, dst_addr, port):
+    def add_vlan_entry(self, vlan_id, dst_mac_addr, port):
         if not self._valid_slice_id(vlan_id):
             raise InvalidInputException("Invalid Slice ID")
         vlan_table = self.get_table(VLAN_TABLE)
         vlan_table.info.data_field_annotation_add(field_name="dst_addr", custom_annotation="mac", action_name="vlan_forward")
         vlan_table_key = vlan_table.make_key([gc.KeyTuple("hdr.vlan.vlan_id", vlan_id)])
-        vlan_table_data = vlan_table.make_data([gc.DataTuple("dst_addr", dst_addr), gc.DataTuple("port", port)],"vlan_forward")
+        vlan_table_data = vlan_table.make_data([gc.DataTuple("dst_addr", dst_mac_addr), gc.DataTuple("port", port)],"vlan_forward")
         return self.add_entry(vlan_table, vlan_table_key, vlan_table_data)
 
+    def add_ip_entry(self, dst_addr, prefix_len, dst_mac_addr, port):
+        ip_table = self.get_table(IP_TABLE)
+        ip_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
+        ip_table.info.data_field_annotation_add(field_name="dst_addr", action_name="Ingress.ipv4_forward", custom_annotation="mac")
+        ip_table_key = ip_table.make_key([gc.KeyTuple(name="hdr.ipv4.dst_addr", value=dst_addr, prefix_len=prefix_len)])
+        ip_table_data = ip_table.make_data([gc.DataTuple("dst_addr", dst_mac_addr), gc.DataTuple("port", port)],"ipv4_forward")
+        return self.add_entry(ip_table, ip_table_key, ip_table_data)
+    
     def add_egress_entry(self, port):
         egress_table = self.get_table(EGRESS_TABLE)
         egress_table_key = egress_table.make_key([gc.KeyTuple("ig_tm_md.ucast_egress_port", port)])

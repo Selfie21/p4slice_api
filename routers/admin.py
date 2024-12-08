@@ -5,7 +5,7 @@ from pydantic import Field
 
 from internal.authlib import current_user_is_admin
 from core.dependencies import get_config, get_client, get_base_model
-from core.models import FirewallEntry, VlanEntry
+from core.models import FirewallEntry, VlanEntry, IpEntry
 
 config = get_config()
 admin = APIRouter(
@@ -49,6 +49,15 @@ def add_vlan(entry: VlanEntry):
         return {"message": f"Creating VLAN entry with VLAN ID {entry.vlan_id} to PORT {entry.port} successful!"}
     else:
         raise HTTPException(status_code=400, detail="Could not add vlan entry, configuring control plane tables failed!")
+
+@admin.post("/ip_route")
+def add_ip(entry: IpEntry):
+    client = get_client()
+    ip_insert_state = client.add_ip_entry(**entry.model_dump())
+    if ip_insert_state:
+        return {"message": f"Creating IP entry with destination IP {entry.dst_addr} to PORT {entry.port} successful!"}
+    else:
+        raise HTTPException(status_code=400, detail="Could not add IP entry, configuring control plane tables failed!")
 
 @admin.post("/egress_route")
 def add_egress(port: Annotated[int, Field(ge=0, le=400)]):

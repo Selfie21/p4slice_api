@@ -54,10 +54,20 @@ class FirewallEntry(BaseModel):
     def ip_to_str(cls, raw: IPv4Address | IPv6Address) -> str:
         return str(raw)
 
+class IpEntry(BaseModel):
+    dst_addr: IPv4Address | IPv6Address = Field(alias="destination_ip")
+    prefix_len: Annotated[int, Field(strict=True, ge=0, le=32, alias="prefix_len")]
+    dst_mac_addr: MacAddress = "12:34:56:78:9a:bc"
+    port : Annotated[int, Field(strict=True, ge=0, le=400)]
+
+    @field_validator("dst_addr", mode="after")
+    @classmethod
+    def ip_to_str(cls, raw: IPv4Address | IPv6Address) -> str:
+        return str(raw)
 
 class VlanEntry(BaseModel):
     vlan_id: int
-    dst_addr: MacAddress = "12:34:56:78:9a:bc"
+    dst_mac_addr: MacAddress = "12:34:56:78:9a:bc"
     port : Annotated[int, Field(strict=True, ge=0, le=400)]
 
 
