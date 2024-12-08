@@ -110,6 +110,7 @@ class Client:
                 data_dict["$FramesTransmittedAll"],
             ]
         print(tabulate(port_data, headers=["Key", "Name", "Enabled", "Up", "Speed", "FramesReceived", "FramesTransmitted"]))
+        return port_data
 
     def info_table(self, table):
         logger.info(f"Getting Information on Table: {table.info.name_get()}")

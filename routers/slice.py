@@ -50,7 +50,8 @@ def add_slice(
         cbs=BURST_SIZE,
         pbs=BURST_SIZE,
     )
-    slice_insert_state = client.add_slice_entry(slice_index, **slice.flow_identification[0].model_dump())
+    for flow_indentification in slice.flow_identification:
+        slice_insert_state = client.add_slice_entry(slice_index, **flow_indentification.model_dump())
 
     if meter_insert_state and slice_insert_state:
         current_user.slices.append(slice.id)

@@ -20,8 +20,6 @@ def get_client(client_no: int = 0) -> Optional[Client]:
         return None
 
     logger.debug(f"Connected with client {client_no}, dumping base_info")
-    client.get_base_info()
-    # port_info = client.get_port_info()
     return client
 
 @lru_cache(1)

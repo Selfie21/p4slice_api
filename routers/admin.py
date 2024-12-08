@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_limiter.depends import RateLimiter
-from typing import List, Dict
-from loguru import logger
+from typing import List, Dict, Annotated
+from pydantic import Field
 
 from internal.authlib import current_user_is_admin
 from core.dependencies import get_config, get_client, get_base_model
@@ -31,6 +31,11 @@ def table_info():
     client = get_client()
     return client.get_base_info()
 
+@admin.get("/port_info", response_model=List)
+def table_info():
+    client = get_client()
+    return client.get_port_info()
+
 @admin.post("/firewall")
 def add_firewall(entry: FirewallEntry):
     client = get_client()
@@ -44,3 +49,13 @@ def add_vlan(entry: VlanEntry):
         return {"message": f"Creating VLAN entry with VLAN ID {entry.vlan_id} to PORT {entry.port} successful!"}
     else:
         raise HTTPException(status_code=400, detail="Could not add vlan entry, configuring control plane tables failed!")
+
+@admin.post("/egress_route")
+def add_egress(port: Annotated[int, Field(ge=0, le=400)]):
+    client = get_client()
+    ip_insert_state = client.add_egress_entry(port)
+    if ip_insert_state:
+        return {"message": f"Setting PORT {port} as egress successful!"}
+    else:
+        raise HTTPException(status_code=400, detail="Could not add egress entry, configuring control plane tables failed!")
+    
