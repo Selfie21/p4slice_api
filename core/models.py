@@ -57,7 +57,7 @@ class FirewallEntry(BaseModel):
 
 class VlanEntry(BaseModel):
     vlan_id: int
-    dst_addr: MacAddress
+    dst_addr: MacAddress = "12:34:56:78:9a:bc"
     port : Annotated[int, Field(strict=True, ge=0, le=400)]
 
 

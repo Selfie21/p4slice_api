@@ -28,6 +28,7 @@ def get_base_model():
     base_model = client.bfrt_info.learn_get("digest_inst")
     base_model.info.data_field_annotation_add("src_addr", "ipv4")
     base_model.info.data_field_annotation_add("dst_addr", "ipv4")
+    return base_model
 
 @lru_cache(1)
 def get_config() -> Configuration:
