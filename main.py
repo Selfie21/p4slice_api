@@ -11,6 +11,7 @@ from routers.slice import slice
 from routers.admin import admin
 from core.dependencies import get_config, get_client, get_slice_data_base
 
+FLOOD_PORTS = [i for i in range(132, 200)]
 
 async def lifespan(_: FastAPI):
     logger.remove(0)
@@ -22,6 +23,8 @@ async def lifespan(_: FastAPI):
 
     logger.debug(f"Configuring m_filter to drop packets with classification RED/3")
     client.add_mfilter_entry(3)
+    logger.debug(f"Configuring ARP requests to be flooded on Ports: {FLOOD_PORTS}")
+    client.add_mutlicast_group(3)
     max_slices = client.size_slice_ident()
     logger.info(f"Identified MAX_SLICES as {max_slices}")
     logger.info(f"MAX_BANDWIDTH_PER_USER is {config.bandwidth_per_user_kbit / 1000} Mbit/s")
