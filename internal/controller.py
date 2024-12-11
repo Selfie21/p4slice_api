@@ -157,7 +157,7 @@ class Client:
             pprint(key_dict)
             pprint(data_dict)
 
-    def add_slice_entry(self, slice_id, src_addr, dst_addr, dst_port, protocol):
+    def add_slice_entry(self, slice_id, src_addr, dst_addr, protocol):
         if not self._valid_slice_id(slice_id):
             raise InvalidInputException("Invalid Slice ID")
         slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
@@ -167,14 +167,13 @@ class Client:
             [
                 gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
                 gc.KeyTuple("hdr.ipv4.dst_addr", dst_addr),
-                gc.KeyTuple("meta.dst_port", dst_port),
                 gc.KeyTuple("hdr.ipv4.protocol", protocol),
             ]
         )
         slice_ident_data = slice_ident_table.make_data([gc.DataTuple("slice_id", slice_id)], "set_sliceid")
         return self.add_entry(slice_ident_table, slice_ident_key, slice_ident_data)
 
-    def delete_slice_entry(self, src_addr, dst_addr, dst_port, protocol):
+    def delete_slice_entry(self, src_addr, dst_addr, protocol):
         slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
         slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
         slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
@@ -182,7 +181,6 @@ class Client:
             [
                 gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
                 gc.KeyTuple("hdr.ipv4.dst_addr", dst_addr),
-                gc.KeyTuple("meta.dst_port", dst_port),
                 gc.KeyTuple("hdr.ipv4.protocol", protocol),
             ]
         )
