@@ -174,7 +174,7 @@ class Client:
         slice_ident_data = slice_ident_table.make_data([gc.DataTuple("slice_id", slice_id)], "set_sliceid")
         return self.add_entry(slice_ident_table, slice_ident_key, slice_ident_data)
 
-    def delete_slice_entry(self, src_addr, dst_addr, src_port, dst_port, protocol):
+    def delete_slice_entry(self, src_addr, dst_addr, dst_port, protocol):
         slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
         slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
         slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
@@ -182,7 +182,6 @@ class Client:
             [
                 gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
                 gc.KeyTuple("hdr.ipv4.dst_addr", dst_addr),
-                gc.KeyTuple("meta.src_port", src_port),
                 gc.KeyTuple("meta.dst_port", dst_port),
                 gc.KeyTuple("hdr.ipv4.protocol", protocol),
             ]
