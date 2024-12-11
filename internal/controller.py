@@ -19,6 +19,8 @@ EGRESS_TABLE = "Ingress.egress_check"
 VLAN_TABLE = "Ingress.vlan_exact"
 IP_TABLE = "Ingress.ipv4_lpm"
 FIREWALL_TABLE = "Ingress.firewall"
+MGID_TABLE = "$pre.mgid"
+NODE_TABLE = "$pre.node"
 RETRY_ATTEMPTS = 3
 PROBE_INTERVAL = 10
 FROM_HW = False
@@ -234,6 +236,22 @@ class Client:
         m_filter_data = m_filter.make_data([], "drop")
         return self.add_entry(m_filter, m_filter_key, m_filter_data)
 
+    def add_mutlicast_group(self, ports):
+        node_table = self.get_table(NODE_TABLE)
+        node_key = node_table.make_key([gc.KeyTuple("$MULTICAST_NODE_ID", 1)])
+        node_data = node_table.make_data([gc.DataTuple("$MULTICAST_RID", 26),
+                                          gc.DataTuple("$MULTICAST_LAG_ID", int_arr_val=[]),
+                                          gc.DataTuple("$DEV_PORT", int_arr_val=ports)])
+        node_status = self.add_entry(node_table, node_key, node_data)
+        
+        mgid_table = self.get_table(MGID_TABLE)
+        mgid_key = mgid_table.make_key([gc.KeyTuple("$MGID", 1)])
+        mgid_data = mgid_table.make_data([gc.DataTuple("$MULTICAST_NODE_ID", int_arr_val=[1]),
+                                          gc.DataTuple("$MULTICAST_NODE_L1_XID_VALID", bool_arr_val=[False]),
+                                          gc.DataTuple("$MULTICAST_NODE_L1_XID", int_arr_val=[0])])
+        mgid_status = self.add_entry(mgid_table, mgid_key, mgid_data)
+        return node_status and mgid_status
+
     def add_entry(self, table, key, data):
         try:
             name = table.info.name_get()
@@ -296,8 +314,8 @@ class Client:
 
             for item in data_list:
                 data_dict = item.to_dict()
-                data_dict.pop('action_name', None)
-                data_dict.pop('is_default_entry', None)
+                data_dict.pop("action_name", None)
+                data_dict.pop("is_default_entry", None)
                 return data_dict
         except RuntimeError:
             logger.info("No digest message received this cycle!")
