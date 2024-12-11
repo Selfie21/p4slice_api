@@ -70,6 +70,15 @@ class VlanEntry(BaseModel):
     dst_mac_addr: MacAddress = "12:34:56:78:9a:bc"
     port : Annotated[int, Field(strict=True, ge=0, le=400)]
 
+class ArpEntry(BaseModel):
+    dst_addr: IPv4Address = Field(alias="destination_ip")
+    port : Annotated[int, Field(strict=True, ge=0, le=400)]
+
+    @field_validator("dst_addr", mode="after")
+    @classmethod
+    def ip_to_str(cls, raw: IPv4Address) -> str:
+        return str(raw)
+    
 
 # User Management
 class User(BaseModel):

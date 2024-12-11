@@ -5,7 +5,7 @@ from pydantic import Field
 
 from internal.authlib import current_user_is_admin
 from core.dependencies import get_config, get_client, get_base_model
-from core.models import FirewallEntry, VlanEntry, IpEntry
+from core.models import FirewallEntry, VlanEntry, IpEntry, ArpEntry
 
 config = get_config()
 admin = APIRouter(
@@ -40,6 +40,16 @@ def table_info():
 def add_firewall(entry: FirewallEntry):
     client = get_client()
     client.add_firewall_entry(entry.src_addr, entry.prefix_len)
+
+@admin.post("/arp_route")
+def add_arp(entry: ArpEntry):
+    client = get_client()
+    arp_insert_state = client.add_arp_entry(**entry.model_dump())
+    if arp_insert_state:
+        return {"message": f"Creating ARP entry with {entry.dst_addr} to PORT {entry.port} successful!"}
+    else:
+        raise HTTPException(status_code=400, detail="Could not add arp entry, configuring control plane tables failed!")
+
 
 @admin.post("/vlan_route")
 def add_vlan(entry: VlanEntry):
