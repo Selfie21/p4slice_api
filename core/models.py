@@ -23,7 +23,6 @@ class Configuration(BaseModel):
 class FlowIdentification(BaseModel):
     src_addr: IPv4Address | IPv6Address = Field(alias="source_ip")
     dst_addr: IPv4Address | IPv6Address = Field(alias="destination_ip")
-    src_port: Annotated[int, Field(strict=True, ge=0, le=65535, alias="source_port")]
     dst_port: Annotated[int, Field(strict=True, ge=0, le=65535, alias="destination_port")]
     protocol: Literal["ICMP", "TCP", "UDP"]
 
