@@ -14,7 +14,7 @@ slice = APIRouter(
     prefix="/slice",
     dependencies=[Depends(RateLimiter(times=config.rate_limit_per_minute, minutes=1))],
 )
-BURST_SIZE = 2
+BURST_SIZE = 1500
 
 
 @slice.post("/add")
