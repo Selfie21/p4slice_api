@@ -23,12 +23,12 @@ class Configuration(BaseModel):
 class FlowIdentification(BaseModel):
     src_addr: IPv4Address | IPv6Address = Field(alias="source_ip")
     dst_addr: IPv4Address | IPv6Address = Field(alias="destination_ip")
-    protocol: Literal["ICMP", "TCP", "UDP"]
+    #protocol: Literal["ICMP", "TCP", "UDP"]
 
-    @field_validator("protocol", mode="after")
-    @classmethod
-    def map_iptype(cls, raw: Literal["ICMP", "TCP", "UDP"]) -> int:
-        return PROTOCOL_MAPPING[raw]
+    #@field_validator("protocol", mode="after")
+    #@classmethod
+    #def map_iptype(cls, raw: Literal["ICMP", "TCP", "UDP"]) -> int:
+        #return PROTOCOL_MAPPING[raw]
 
     @field_validator("src_addr", "dst_addr", mode="after")
     @classmethod
