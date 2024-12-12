@@ -95,9 +95,3 @@ def info_slice(current_user: Annotated[User, Depends(get_current_active_user)], 
     for slice_id in current_user.slices:
         tmp.append(get_from_database(slice_id, slice_database))
     return tmp
-
-
-# TODO: only used for debug remove in prod
-@slice.get("/database")
-def info_slice(current_user: Annotated[User, Depends(get_current_active_user)], slice_database: dict = Depends(get_slice_data_base)):
-    return slice_database
