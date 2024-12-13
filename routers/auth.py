@@ -17,13 +17,6 @@ auth = APIRouter(
     dependencies=[Depends(RateLimiter(times=config.rate_limit_per_minute, minutes=1))]
 )
 
-# TODO: remove in prod
-db = get_user_data_base()
-db["user1"] = User(username="user1", hashed_password=get_password_hash("pw1"), admin=True)
-db["user2"] = User(username="user2", hashed_password=get_password_hash("pw2"), admin=False)
-db["user3"] = User(username="user3", hashed_password=get_password_hash("pw3"), admin=False)
-
-
 @auth.post("/register")
 def register_user(user: CreateUser, session: dict = Depends(get_user_data_base)):
     if user.username in session:
