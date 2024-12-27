@@ -4,7 +4,7 @@ from pydantic import UUID4
 from typing import Annotated, List
 from loguru import logger
 
-from core.models import BaseSlice, User
+from core.models import BaseSlice, User, FlowIdentification, PortIdentification
 from core.dependencies import get_config, get_client, get_slice_data_base, get_user_data_base
 from internal.util import get_from_database, insert_into_database, delete_from_database, used_bandwidth
 from internal.authlib import get_current_active_user
@@ -50,9 +50,11 @@ def add_slice(
         cbs=BURST_SIZE,
         pbs=BURST_SIZE,
     )
-    for flow_indentification in slice.flow_identification:
-        slice_insert_state = client.add_slice_entry(slice_index, **flow_indentification.model_dump())
-
+    for identification in slice.identification:
+        if isinstance(identification, FlowIdentification):
+            slice_insert_state = client.add_slice_entry(slice_index, **identification.model_dump())
+        elif isinstance(identification, PortIdentification):
+            slice_insert_state = client.add_slice_entry(slice_index, **identification.model_dump())
     if meter_insert_state and slice_insert_state:
         current_user.slices.append(slice.id)
         logger.debug(f"Programmed meter and slice ident table with {slice_index}")
@@ -80,7 +82,7 @@ def delete_slice(
     if slice_info:
         delete_from_database(slice_id, slice_database)
         user_database[current_user.username].slices.remove(slice_id)
-        slice_delete_status = client.delete_slice_entry(**slice_info.flow_identification[0].model_dump())
+        slice_delete_status = client.delete_slice_entry(**slice_info.identification[0].model_dump())
         if slice_delete_status:
             return {"message": f"Deletion of slice {slice_id} successful!"}
         else:
