@@ -8,6 +8,7 @@ from internal.authlib import (
     get_current_active_user,
     get_password_hash,
     create_access_token,
+    current_user_is_admin
 )
 from core.dependencies import get_user_data_base, get_config
 from core.models import User, CreateUser, Token
@@ -17,8 +18,16 @@ auth = APIRouter(
     dependencies=[Depends(RateLimiter(times=config.rate_limit_per_minute, minutes=1))]
 )
 
-@auth.post("/register")
-def register_user(user: CreateUser, session: dict = Depends(get_user_data_base)):
+db = get_user_data_base()
+db["user1"] = User(username="user1", hashed_password=get_password_hash("pw1"), admin=True)
+db["user2"] = User(username="user2", hashed_password=get_password_hash("pw2"), admin=False)
+db["user3"] = User(username="user3", hashed_password=get_password_hash("pw3"), admin=False)
+
+@auth.post("/register", response_model=dict)
+def register_user(user: CreateUser, session: dict = Depends(get_user_data_base), _ = Depends(current_user_is_admin)):
+    """
+    Registers a new user for P4Slice. Admin rights are required to perform this action.
+    """
     if user.username in session:
         raise HTTPException(status_code=400, detail="User already registered!!")
 
@@ -28,8 +37,11 @@ def register_user(user: CreateUser, session: dict = Depends(get_user_data_base))
     return {"message": "User created successfully"}
 
 
-@auth.post("/token")
+@auth.post("/token", response_model=Token)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestFormStrict, Depends()], session: dict = Depends(get_user_data_base)) -> Token:
+    """
+    Token endpoint used to provide an OAuth2 token for the user. If the user enters correct credentials, an OAuth2 bearer token is returned, that provides access to the API. The token also contains the username, which is used to identify the type of user.
+    """
     user = authenticate_user(session, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -43,4 +55,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestFormS
 
 @auth.get("/info", response_model=User)
 async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]) -> User:
+    """
+    This endpoint returns the user information of the currently logged in user.
+    """
     return current_user

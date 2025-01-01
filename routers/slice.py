@@ -17,13 +17,15 @@ slice = APIRouter(
 BURST_SIZE = 1500
 
 
-@slice.post("/add")
+@slice.post("/add", response_model=dict)
 def add_slice(
     current_user: Annotated[User, Depends(get_current_active_user)],
     slice: BaseSlice,
     slice_database: dict = Depends(get_slice_data_base),
 ):
-    
+    """
+    This endpoint can be used to add a slice to the database and also program the data plane tables. The tables include the meter and the Slice-Identification-Table. The user must be authorized to add the slice.
+    """
     total_bandwidth = used_bandwidth(current_user.slices, slice_database)
     if (total_bandwidth + slice.max_bandwidth) > config.bandwidth_per_user_kbit:
         raise HTTPException(
@@ -63,13 +65,16 @@ def add_slice(
         raise HTTPException(status_code=400, detail="Could not add slice, configuring control plane tables failed!")
 
 
-@slice.delete("/del")
+@slice.delete("/del", response_model=dict)
 def delete_slice(
     slice_id: UUID4,
     current_user: Annotated[User, Depends(get_current_active_user)],
     slice_database: dict = Depends(get_slice_data_base),
     user_database: dict = Depends(get_user_data_base),
 ):
+    """
+    This endpoint can be used to delete a slice from the database and also from the data plane tables. The user must be authorized to delete the slice.
+    """
     client = get_client()
     if not slice_id in current_user.slices:
         raise HTTPException(
@@ -93,6 +98,9 @@ def delete_slice(
 
 @slice.get("/info", response_model=List[BaseSlice])
 def info_slice(current_user: Annotated[User, Depends(get_current_active_user)], slice_database: dict = Depends(get_slice_data_base)):
+    """
+    This endpoint returns the slice information of the currently logged in user.
+    """
     tmp = []
     for slice_id in current_user.slices:
         tmp.append(get_from_database(slice_id, slice_database))
