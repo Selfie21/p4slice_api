@@ -14,7 +14,8 @@ import bfrt_grpc.client as gc
 from bfrt_grpc.client import BfruntimeReadWriteRpcException
 
 DEFAULT_GRPC_ADDRESS = "localhost:50052"
-SLICE_IDENT_TABLE = "Ingress.slice_ident"
+SLICE_IDENT_TABLE_PORT = "Ingress.slice_ident_port"
+SLICE_IDENT_TABLE_FLOW = "Ingress.slice_ident_flow"
 EGRESS_TABLE = "Ingress.egress_check"
 VLAN_TABLE = "Ingress.vlan_exact"
 IP_TABLE = "Ingress.ipv4_lpm"
@@ -157,46 +158,55 @@ class Client:
             pprint(key_dict)
             pprint(data_dict)
 
-    def add_slice_entry(self, slice_id, src_addr, dst_addr, src_port, dst_port, protocol):
+    def add_slice_entry(self, slice_id = None, src_addr = None, dst_addr = None, src_port = None, dst_port = None, protocol = None, ingress_port = None):
         if not self._valid_slice_id(slice_id):
             raise InvalidInputException("Invalid Slice ID")
-        slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
-        slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
-        slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
-        slice_ident_key = slice_ident_table.make_key(
-            [
-                gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
-                gc.KeyTuple("hdr.ipv4.dst_addr", dst_addr),
-                gc.KeyTuple("meta.src_port", src_port),
-                gc.KeyTuple("meta.dst_port", dst_port),
-                gc.KeyTuple("hdr.ipv4.protocol", protocol),
-            ]
-        )
+        if ingress_port:
+            slice_ident_table = self.get_table(SLICE_IDENT_TABLE_PORT)
+            print(ingress_port)
+            slice_ident_key = slice_ident_table.make_key([gc.KeyTuple("ig_intr_md.ingress_port", ingress_port)])
+        else:
+            slice_ident_table = self.get_table(SLICE_IDENT_TABLE_FLOW)
+            slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
+            slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
+            slice_ident_key = slice_ident_table.make_key(
+                [
+                    gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
+                    gc.KeyTuple("hdr.ipv4.dst_addr", dst_addr),
+                    gc.KeyTuple("meta.src_port", src_port),
+                    gc.KeyTuple("meta.dst_port", dst_port),
+                    gc.KeyTuple("hdr.ipv4.protocol", protocol),
+                ]
+            )
         slice_ident_data = slice_ident_table.make_data([gc.DataTuple("slice_id", slice_id)], "set_sliceid")
         return self.add_entry(slice_ident_table, slice_ident_key, slice_ident_data)
 
-    def delete_slice_entry(self, src_addr, dst_addr, src_port, dst_port, protocol):
-        slice_ident_table = self.get_table(SLICE_IDENT_TABLE)
-        slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
-        slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
-        slice_ident_key = slice_ident_table.make_key(
-            [
-                gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
-                gc.KeyTuple("hdr.ipv4.dst_addr", dst_addr),
-                gc.KeyTuple("meta.src_port", src_port),
-                gc.KeyTuple("meta.dst_port", dst_port),
-                gc.KeyTuple("hdr.ipv4.protocol", protocol),
-            ]
-        )
+    def delete_slice_entry(self, src_addr = None, dst_addr = None, src_port = None, dst_port = None, protocol = None, ingress_port = None):
+        if ingress_port:
+            slice_ident_table = self.get_table(SLICE_IDENT_TABLE_PORT)
+            slice_ident_key = slice_ident_table.make_key([gc.KeyTuple("ig_intr_md.ingress_port", ingress_port)])
+        else:
+            slice_ident_table = self.get_table(SLICE_IDENT_TABLE_FLOW)
+            slice_ident_table.info.key_field_annotation_add(field_name="src_addr", custom_annotation="ipv4")
+            slice_ident_table.info.key_field_annotation_add(field_name="dst_addr", custom_annotation="ipv4")
+            slice_ident_key = slice_ident_table.make_key(
+                [
+                    gc.KeyTuple("hdr.ipv4.src_addr", src_addr),
+                    gc.KeyTuple("hdr.ipv4.dst_addr", dst_addr),
+                    gc.KeyTuple("meta.src_port", src_port),
+                    gc.KeyTuple("meta.dst_port", dst_port),
+                    gc.KeyTuple("hdr.ipv4.protocol", protocol),
+                ]
+            )
         return self.delete_entry(slice_ident_table, slice_ident_key)
 
     def _valid_slice_id(self, slice_id):
-        slice_ident = self.get_table(SLICE_IDENT_TABLE)
+        slice_ident = self.get_table(SLICE_IDENT_TABLE_FLOW)
         max_slices = slice_ident.info.size_get()
         return slice_id >= 0 and slice_id < int(max_slices)
 
     def size_slice_ident(self):
-        slice_ident = self.get_table(SLICE_IDENT_TABLE)
+        slice_ident = self.get_table(SLICE_IDENT_TABLE_FLOW)
         return slice_ident.info.size_get()
 
     def add_vlan_entry(self, vlan_id, dst_mac_addr, port):

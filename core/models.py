@@ -18,7 +18,6 @@ class Configuration(BaseModel):
     redis_url: str
     redis_password: SecretStr
 
-
 # Slice Management
 class FlowIdentification(BaseModel):
     src_addr: IPv4Address | IPv6Address = Field(alias="source_ip")
@@ -37,12 +36,14 @@ class FlowIdentification(BaseModel):
     def ip_to_str(cls, raw: IPv4Address | IPv6Address) -> str:
         return str(raw)
 
+class PortIdentification(BaseModel):
+    ingress_port: Annotated[int, Field(strict=True, ge=0, le=447)]
 
 class BaseSlice(BaseModel):
     id: UUID4 = Field(default_factory=uuid4)
     guaranteed_bandwidth: Annotated[int, Field(strict=True, gt=0, description="guaranteed bandwidth in kilobit/s")]
     max_bandwidth: Annotated[int, Field(strict=True, gt=0, description="maximum bandwidth in kilobit/s")]
-    flow_identification: Annotated[List[FlowIdentification], Field(min_length=1, max_length=20)]
+    identification: Annotated[List[FlowIdentification | PortIdentification], Field(min_length=1, max_length=20)]
 
 
 class FirewallEntry(BaseModel):
